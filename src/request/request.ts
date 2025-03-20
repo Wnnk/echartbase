@@ -69,12 +69,12 @@ class Request {
     }
   }
 
-  public get = async (url: string, params?: any): Promise<any> => {
+  public get = async (url: string, params?: any, headers?:any): Promise<any> => {
     if (this.requests >= this.maxRequests) {
       return new Promise((resolve, reject) => {
         this.queue.push(() => {
           this.instance
-            .get(url, { params, headers: { 'Cache-Control': 'no-cache' } })
+            .get(url, { params, headers })
             .then(resolve)
             .catch(reject)
         })
@@ -82,7 +82,7 @@ class Request {
     } else {
       this.requests++
       try {
-        return await this.instance.get(url, { params, headers: { 'Cache-Control': 'no-cache' } })
+        return await this.instance.get(url, { params, headers })
       } finally {
         this.requests--
         this.processQueue()
@@ -90,17 +90,17 @@ class Request {
     }
   }
 
-  public post = async (url: string, data?: any): Promise<any> => {
+  public post = async (url: string, data?: any,headers?:any): Promise<any> => {
     if (this.requests >= this.maxRequests) {
       return new Promise((resolve, reject) => {
         this.queue.push(() => {
-          this.instance.post(url, data).then(resolve).catch(reject)
+          this.instance.post(url, data, {headers}).then(resolve).catch(reject)
         })
       })
     } else {
       this.requests++
       try {
-        return await this.instance.post(url, data)
+        return await this.instance.post(url, data, {headers})
       } finally {
         this.requests--
         this.processQueue()

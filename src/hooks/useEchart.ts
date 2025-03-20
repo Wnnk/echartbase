@@ -11,6 +11,7 @@ import {
   DataZoomComponent,
   ToolboxComponent,
   VisualMapComponent, // 视觉映射组件
+  LegendComponent 
 } from 'echarts/components'
 import { LabelLayout, UniversalTransition } from 'echarts/features'
 import { CanvasRenderer } from 'echarts/renderers'
@@ -53,6 +54,7 @@ echarts.use([
   DataZoomComponent,
   ToolboxComponent,
   VisualMapComponent,
+  LegendComponent 
 ])
 
 class Echart {

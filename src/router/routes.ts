@@ -11,10 +11,20 @@ const routes = [
     component: () => import('@/views/bigDataEchart/index.vue'),
   },
   {
-    path: '/',
+    path: '/MoreEchart',
     name: 'MoreEchart',
     component: () => import('@/views/moreEchart/index.vue'),
   },
+  {
+    path: '/realtimeEchart',
+    name: 'realtimeEchart',
+    component: () => import('@/views/realtimeEchart/index.vue'),
+  },
+  {
+   path: '/',
+   name: 'Form',
+   component: () => import('@/views/form/index.vue')
+  }
 ]
 
 export default routes
