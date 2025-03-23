@@ -38,16 +38,6 @@ onMounted(() => {
     observer.observe(dom)
   })
 })
-
-// onMounted(async () => {
-
-//   for (let i = 0; i < echartList.value.length; i++) {
-//     const dom = document.getElementById(`chart${i}`) as HTMLDivElement
-//     if (!dom) return
-//     const option = await getMoreData()
-//     const chart = new Echart(dom, option)
-//   }
-// })
 </script>
 
 <style lang="scss" scoped>
