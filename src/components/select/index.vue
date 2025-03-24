@@ -13,6 +13,8 @@
       @visible-change="visiableChange($event,url)"
       :options="virtualOptions"
       scrollbar-always-on
+      v-down="scrollBottom"
+
     >
       <!-- 自定义item渲染模板 -->
        <template #default="{ item }" >
@@ -60,8 +62,8 @@ const selectValue = defineModel();
 const state = ref(0);
 /* 重试次数 */
 const retryCount = ref(0);
-/* elbar */
-const elbar = ref(null);
+
+
 
 type OptionItem ={
   label:string,
@@ -71,7 +73,6 @@ type OptionItem ={
 const virtualOptions = ref<OptionItem[]>([]);
 let loadStart = 0;
 let loadEnd = 50;
-
 
 
 
