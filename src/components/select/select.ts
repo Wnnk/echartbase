@@ -1,5 +1,4 @@
 export const selectProps = {
-
   url: {
     type: String,
     default: ''

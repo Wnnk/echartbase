@@ -14,31 +14,22 @@
         请求数据为空
       </template>
     </Select>
-
-
-
-    <!-- <el-form :model="formInline" class="demo-form-inline">
-      {{formInline}}
-      <el-form-item label="活动区域">
-        <el-select v-model="formInline.region" placeholder="请选择活动区域" :style="{width: '340px'}"   
-          value-key="id"
-          >
-          <el-option :label="item.label" :value="item" v-for="item in options"></el-option>
-        </el-select>
-      </el-form-item>
-      <el-form-item>
-        <el-button type="primary" @click="onSubmit">
-          更新
-        </el-button>
-      </el-form-item>
-    </el-form> -->
-  
+    <el-button @click="onclick"> 打开弹窗</el-button>
   </div>
+  
+
+
+
+
+ 
+
 </template>
 
 <script setup lang='ts'>
 import { onMounted, ref,watch } from 'vue'
 import Select from '@/components/select/index.vue'
+import { renderDialog } from '@/utils/dialog';
+import Test from './test.vue';
 
 const selectValue = ref('id');
 const formInline = ref({
@@ -63,9 +54,17 @@ onMounted(() => {
   },1000)
 })
 
-
-const onSubmit = () => {
-  console.log(formInline.value)
+const onclick = async () => {
+  renderDialog(
+    Test,
+    {
+  
+    },
+    {
+      title: '弹窗标题',
+      center: true,
+    }
+  )
 }
 </script>
 
@@ -77,4 +76,6 @@ const onSubmit = () => {
   place-items: center;
   justify-content: center;
 }
+
+
 </style>

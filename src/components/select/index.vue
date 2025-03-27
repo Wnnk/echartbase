@@ -13,7 +13,6 @@
       @visible-change="visiableChange($event, url)"
       :options="virtualOptions"
       scrollbar-always-on
-      v-down="scrollBottom"
 
     >
       <!-- 自定义item渲染模板 -->
