@@ -6,7 +6,7 @@ const routes = [
   // },
   {
     // path: '/bigDataEchart',
-    path: '/BigDataEchart',
+    path: '/',
     name: 'BigDataEchart',
     component: () => import('@/views/bigDataEchart/index.vue'),
   },
@@ -21,15 +21,25 @@ const routes = [
     component: () => import('@/views/realtimeEchart/index.vue'),
   },
   {
-   path: '/form',
-   name: 'Form',
-   component: () => import('@/views/form/index.vue')
+    path: '/form',
+    name: 'Form',
+    component: () => import('@/views/form/index.vue'),
   },
   {
-    path:'/',
+    path: '/dynamicForm',
     name: 'DynamicForm',
-    component: () => import('@/views/dynamicForm/index.vue')
-  }
+    component: () => import('@/views/dynamicForm/index.vue'),
+  },
+  {
+    path: '/fontSizeEchart',
+    name: 'FontSizeEchart',
+    component: () => import('@/views/fontSizeEchart/index.vue'),
+  },
+  {
+    path: '/waterMarkEchart',
+    name: 'WaterMarkEchart',
+    component: () => import('@/views/watermarkEchart/index.vue'),
+  },
 ]
 
 export default routes

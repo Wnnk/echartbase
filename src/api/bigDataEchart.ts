@@ -3,7 +3,7 @@ export const test = () => {
   console.log('test')
 }
 
-export const getBigData = async () => {
+export const getEchart = async () => {
   let data = []
   let start = 0
   let end = 20000
@@ -12,6 +12,11 @@ export const getBigData = async () => {
     data.push(...chunnkData)
   }
   return data
+}
+
+export const getBigData = async () => {
+  const res = await request.get('/getBigData')
+  return res
 }
 
 export const testData = async (start: number, end: number) => {
