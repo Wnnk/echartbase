@@ -1,54 +1,42 @@
+import axios from "axios";
+
 self.onmessage = (e) => {
-  const { resData, type, option } = e.data
+  let {  type } = e.data
   switch (type) {
     case 'init':
-      InitHandlerOption(resData, option)
+      requestData('http://localhost:3000/api/getBigData')
       break
     default:
       break
   }
 }
 
-const InitHandlerOption = (data: any, option: any) => {
-  option.datazoom = [
-    {
-      type: 'inside',
-      start: 0,
-      end: 10,
-    },
-    {
-      start: 0,
-      end: 10,
-    },
-  ]
-  option.xAxis = {
-    type: 'time',
-    splitLine: {
-      show: false,
-    },
-    data: data.map((item: any) => item.time),
+const requestData = async (url: string) => { 
+  const response = await axios({
+    method: 'get',
+    url
+  })
+  if(response.data.code === 2000) {
+    const data = response.data.data
+    InitHandlerOption(data)
   }
-  option.yAxis = {
-    boundaryGap: [0, '10%'],
-    splitLine: {
-      show: true,
-    },
-  }
-  option.series = [
-    {
-      type: 'line',
-      showSymbol: false,
-      name: 'value',
-      data: data.map((item: any) => item.value),
-      encode: {
-        x: 'time',
-        y: 'value',
-      },
-      animation: false, // 关闭动画提升性能
-      large: true, // 启用大数据量优化模式
-      progressiveChunkMode: 'mod', // 分块模式
-    },
-  ]
-
-  self.postMessage({ option })
 }
+
+
+const InitHandlerOption = (data: any) => {
+  const chunkSize = 2000;
+  const chunkArray = []
+  for(let i = 0; i < data.length; i++) {
+    chunkArray.push([data[i].time, data[i].value])
+  }
+  for(let i = 0; i < data.length; i += chunkSize) {
+    const chunk = chunkArray.slice(i, i + chunkSize);
+    self.postMessage({
+      chunk,
+      type: `${i === 0? 'init' : 'chunk'}`,
+      done: i + chunkSize >= data.length,
+    });
+  }
+}
+
+

@@ -1,188 +1,101 @@
-<!-- 
-  @description: 二次封装el-select-v2组件
-    -接口挂了 -> 添加通讯状态 -> 重新加载数据 -> 加载失败提示，
-    -大数据量 -> 预加载一部分 -> 惰性加载逐步加载数据,
-    -触底加载
+<!--
+  @description:  
   @author: Wnnk
 -->
+
 <template>
   <div>
-    <el-select-v2
-      v-model="selectValue"
-      v-bind="$attrs"
-      @visible-change="visiableChange($event, url)"
-      :options="virtualOptions"
-      scrollbar-always-on
-    >
-      <!-- 自定义item渲染模板 -->
-      <template #default="{ item }">
-        <div :style="{ display: 'flex' }">
-          <span :style="{ flex: 1 }">{{ item.label }}</span>
-          <span :style="{ color: 'red', fontSize: '20px', marginLeft: '5px' }">{{
-            item.price
-          }}</span>
-        </div>
+    <el-select style="width: 240px" v-model="selectValue">
+      <!-- 头部插槽 -->
+      <template #header>
+        <slot name="header">
+          <div class="header">
+            <el-button @click="useDialog">添加</el-button>
+          </div>
+        </slot>
       </template>
-      <!-- 自定义通讯状态 -->
+      
+      <!-- 默认选项插槽 -->
+      <slot name="options" :options="data">
+        <el-option 
+          v-for="item in data" 
+          :key="item.value" 
+          :label="item.label" 
+          :value="item.value"
+        />
+      </slot>
+      <!-- empty 插槽 -->
       <template #empty>
-        <div v-if="state === 3">
-          error
-          <el-button @click="loadData(url)">请稍后重试</el-button>
+        <div class="error" v-if="state === 3">
+          加载失败
         </div>
-        <div v-else>
-          <!-- 自定义空数据模板 -->
-          <slot name="emptyData"> </slot>
-        </div>
+        <div class="empty" v-else>暂无数据</div>
       </template>
-      <!-- 自定义加载中模板 -->
+      
+      <!-- 底部插槽 -->
       <template #footer v-if="state === 1">
-        <div>loading中</div>
+        <slot name="footer">
+          <div class="footer" >
+            loading...
+          </div>
+        </slot>
       </template>
-    </el-select-v2>
+    </el-select>
   </div>
 </template>
 
-<script setup lang="ts">
-import { toRefs, ref, defineProps, defineModel, onMounted, watch, nextTick } from 'vue'
-import { selectProps } from './select'
-import { getSelectData } from '@/api/getSelectData'
-import debounce from 'lodash/debounce'
 
-const props = defineProps(selectProps)
-const { url } = toRefs(props)
-const selectValue = defineModel()
-// 0：未加载 ，1：加载中，2:加载完成 3：加载失败
-const state = ref(0)
-/* 重试次数 */
-const retryCount = ref(0)
+<script setup lang='ts'>
+import { ref } from 'vue'
+import type { PropType } from 'vue';
+import { renderDialog } from '@/utils/dialog';
+import addForm from './addForm.vue';
+import { ElMessageBox } from 'element-plus';
 
-let dropdownListEl: HTMLElement | null = null
-
-type OptionItem = {
-  label: string
-  value: string
-  price: number
+interface City {
+  value: string;
+  label: string;
 }
-const virtualOptions = ref<OptionItem[]>([])
-let loadStart = 0
-let loadEnd = 50
-
-/**
- * @description:  初始加载部分数据
- * @param url: 请求地址
- * @param start: 开始位置
- * @param end: 结束位置
- **/
-const initData = async (url: string, start: number, end: number) => {
-  try {
-    state.value = 1
-    const res = await getSelectData(url, start, end)
-    virtualOptions.value.push(...res)
-    state.value = 0
-    retryCount.value = 0
-    loadStart = loadEnd
-    loadEnd += 50
-  } catch (error) {
-    state.value = 3
-    console.error(error)
+const props = defineProps({
+  data: {
+    type: Array as PropType<City[]>,
+    required: true,
   }
-}
+});
+const { data } = props;
+const selectValue  = defineModel()
 
-/**
- * @description：下拉框显示/隐藏
- * @param visiable: 是否下拉
- **/
-const visiableChange = (visiable: boolean, url: string) => {
-  if (visiable) {
-    // 如果数据已经加载完成，直接绑定滚动事件
-    if (virtualOptions.value.length > 0) {
-      bindScrollListener()
+
+/** 
+ * @description: 动态表单弹窗 
+**/
+const useDialog = async () => {
+  const formCache =  sessionStorage.getItem('formCache');
+  if (formCache) {
+    const confirm = await ElMessageBox.confirm('是否使用上次填写的数据？')
+    if (confirm) {
+      const form = JSON.parse(formCache);
+      renderDialog(addForm, { form }, {});
     } else {
-      // 如果数据还未加载完成，监听 options 的变化
-      const unwatch = watch(virtualOptions.value, () => {
-        if (virtualOptions.value.length > 0) {
-          bindScrollListener()
-          unwatch() // 绑定后取消监听
-        }
-      })
+      renderDialog(addForm, {}, {});
     }
-  } else {
-    // 当下拉框隐藏时，移除滚动事件
-    if (dropdownListEl) {
-      dropdownListEl.removeEventListener('scroll', handleScroll)
-      dropdownListEl = null
-    }
-  }
+    return;
+  } 
+  renderDialog(addForm, {}, {});
 }
 
-/**
- * @description: 懒加载数据
- * @param url: 请求地址
- **/
-const loadData = async (url: string) => {
-  if (state.value === 1) return // 防止重复请求
-  try {
-    state.value = 1
-    console.log('loadData')
-    const res = await getSelectData(url, loadStart, loadEnd)
-    virtualOptions.value.push(...res)
-    state.value = 2
-    retryCount.value = 0
-    loadStart = loadEnd
-    loadEnd += 100
-  } catch (error) {
-    state.value = 3
-    console.error(error)
-  }
-}
+// 0：未加载 ，1：加载中，2:加载完成 3：加载失败
+const state = ref(3);
 
-/**
- * @description: 重试
- **/
-const retry = () => {
-  if (retryCount.value > 2) return
-  retryCount.value++
-  loadData(url.value)
-}
 
-/**
- * @description: 触底加载
- **/
-const handleScroll = () => {
-  if (!dropdownListEl) return
-  const { scrollTop, scrollHeight } = dropdownListEl
-  if (scrollTop >= scrollHeight - 400) {
-    debounce(loadData, 500)(url.value)
-  }
-}
 
-// 绑定滚动事件到 .el-select-dropdown__list
-const bindScrollListener = () => {
-  nextTick(() => {
-    dropdownListEl = document.querySelector('.el-select-dropdown__list')
-    if (dropdownListEl) {
-      dropdownListEl.addEventListener('scroll', handleScroll)
-    }
-  })
-}
-
-onMounted(() => {
-  initData(url.value, loadStart, loadEnd)
-})
-
-watch(
-  () => state.value,
-  (newState) => {
-    if (newState === 3) {
-      retry()
-    }
-  },
-)
 </script>
 
-<style lang="scss" scoped>
-.custom-select-dropdown .el-select-dropdown__wrap {
-  max-height: 200px;
-  overflow-y: auto;
+<style lang='scss' scoped>
+.header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
+
 </style>

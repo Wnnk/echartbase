@@ -6,7 +6,7 @@ const routes = [
   // },
   {
     // path: '/bigDataEchart',
-    path: '/',
+    path: '/bigDataEchart',
     name: 'BigDataEchart',
     component: () => import('@/views/bigDataEchart/index.vue'),
   },
@@ -21,7 +21,7 @@ const routes = [
     component: () => import('@/views/realtimeEchart/index.vue'),
   },
   {
-    path: '/form',
+    path: '/',
     name: 'Form',
     component: () => import('@/views/form/index.vue'),
   },
