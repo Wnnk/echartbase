@@ -1,0 +1,90 @@
+import { v4 as uuidv4 } from 'uuid'
+import type { Widget } from './type'
+export const widget: Widget[] = [
+  {
+    id: uuidv4(),
+    icon: '',
+    type: 'input',
+    name: '',
+    hidden: false,
+    labelHidden: false,
+    required: false,
+    requiredHint: '',
+    validation: '',
+    validationHint: '',
+    props: {
+      label: '输入框',
+      type: 'text',
+      placholder: '请输入',
+      style: {
+        width: '500px',
+      },
+    },
+    rules: [{ type: 'number', message: 'age must be a number' }],
+  },
+  {
+    id: uuidv4(),
+    icon: '',
+    type: 'select',
+    name: '',
+    hidden: false,
+    labelHidden: false,
+    required: false,
+    requiredHint: '',
+    validation: '',
+    validationHint: '',
+    props: {
+      label: '下拉框',
+      placeholder: '请下拉选择',
+      defaultValue: '1',
+      options: [
+        { label: '选项1', value: '1' },
+        { label: '选项2', value: '2' },
+        { label: '选项3', value: '3' },
+      ],
+      style: {
+        width: '240px',
+      },
+    },
+    rules: [],
+  },
+  {
+    id: uuidv4(),
+    icon: '',
+    type: 'radio',
+    name: '',
+    hidden: false,
+    labelHidden: false,
+    required: false,
+    requiredHint: '',
+    validation: '',
+    validationHint: '',
+    props: {
+      label: '单选框',
+      options: [
+        { label: '选项1', value: '1' },
+        { label: '选项2', value: '2' },
+      ],
+      style: {
+        width: '240px',
+      },
+    },
+    rules: [],
+  },
+  {
+    id: uuidv4(),
+    icon: '',
+    type: 'timePick',
+    name: '',
+    hidden: false,
+    labelHidden: false,
+    required: false,
+    requiredHint: '',
+    validation: '',
+    validationHint: '',
+    props: {
+      label: '时间选择器',
+    },
+    rules: [],
+  },
+]

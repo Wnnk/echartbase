@@ -21,12 +21,12 @@ const routes = [
     component: () => import('@/views/realtimeEchart/index.vue'),
   },
   {
-    path: '/',
+    path: '/form',
     name: 'Form',
     component: () => import('@/views/form/index.vue'),
   },
   {
-    path: '/dynamicForm',
+    path: '/',
     name: 'DynamicForm',
     component: () => import('@/views/dynamicForm/index.vue'),
   },
