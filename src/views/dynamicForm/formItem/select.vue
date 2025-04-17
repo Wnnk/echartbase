@@ -13,7 +13,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, inject } from 'vue'
 import type { PropType } from 'vue'
 import type { Widget } from '../type'
 
@@ -22,10 +22,8 @@ const props = defineProps({
     type: Object as PropType<Widget>,
     required: true,
   },
-  currentItem: {
-    type: Object as PropType<any>,
-  },
 })
-const { widget, currentItem } = props
+const { widget } = props;
 const value = defineModel()
+
 </script>

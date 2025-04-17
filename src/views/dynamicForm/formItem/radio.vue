@@ -1,9 +1,12 @@
 <template>
-  <el-radio-group v-model="id">
-    <el-radio v-for="option in options" :value="option.label" :key="option.value">
-      {{ option.label }}
-    </el-radio>
-  </el-radio-group>
+  <el-form-item>
+    <el-radio-group v-model="id">
+      <el-radio v-for="option in options" :value="option.label" :key="option.value">
+        {{ option.label }}
+      </el-radio>
+    </el-radio-group>
+  </el-form-item>
+  
 </template>
 
 <script setup lang="ts">

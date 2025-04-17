@@ -9,24 +9,23 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, inject } from 'vue'
 import type { Widget } from '../type'
 import type { PropType } from 'vue'
+
+
+
 const props = defineProps({
   widget: {
     type: Object as PropType<Widget>,
     required: true,
-  },
-  currentItem: {
-    type: Object as PropType<any>,
-    default: null,
   },
   rules: {
     type: Array as PropType<any[]>,
     default: () => [],
   },
 })
-const { widget, currentItem, rules } = props
+const { widget, rules } = props
 const value = defineModel()
 console.log(widget)
 </script>

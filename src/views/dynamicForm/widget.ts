@@ -12,12 +12,13 @@ export const widget: Widget[] = [
     requiredHint: '',
     validation: '',
     validationHint: '',
+    span: 12,
     props: {
       label: '输入框',
       type: 'text',
       placholder: '请输入',
       style: {
-        width: '500px',
+        width: '100%',
       },
     },
     rules: [{ type: 'number', message: 'age must be a number' }],
@@ -33,6 +34,7 @@ export const widget: Widget[] = [
     requiredHint: '',
     validation: '',
     validationHint: '',
+    span: 12,
     props: {
       label: '下拉框',
       placeholder: '请下拉选择',
@@ -43,7 +45,7 @@ export const widget: Widget[] = [
         { label: '选项3', value: '3' },
       ],
       style: {
-        width: '240px',
+        width: '100%',
       },
     },
     rules: [],
@@ -59,6 +61,7 @@ export const widget: Widget[] = [
     requiredHint: '',
     validation: '',
     validationHint: '',
+    span: 12,
     props: {
       label: '单选框',
       options: [
@@ -66,7 +69,7 @@ export const widget: Widget[] = [
         { label: '选项2', value: '2' },
       ],
       style: {
-        width: '240px',
+        width: '100%',
       },
     },
     rules: [],
@@ -82,6 +85,7 @@ export const widget: Widget[] = [
     requiredHint: '',
     validation: '',
     validationHint: '',
+    span: 12,
     props: {
       label: '时间选择器',
     },

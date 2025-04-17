@@ -2,6 +2,8 @@ type labelPosition = 'left' | 'top'
 type labelAlign = 'left' | 'right' | 'center'
 type size = 'default' | 'small' | 'large'
 type layoutType = 'default' | 'inline'
+
+
 export interface JsonSchema {
   formConfig: FormConfig
   widgetList: Widget[]
@@ -44,6 +46,7 @@ export interface Widget {
   validation: string // 校验字段
   validationHint: string // 校验失败提示
   rules?: any[] // 组件验证规则
+  span: number // 组件跨度
   props: {
     // 组件属性
     [key: string]: any

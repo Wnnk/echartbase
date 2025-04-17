@@ -1,46 +1,47 @@
 <template>
   <div class="form-view">
     <div class="form-materials">
-      <div v-for="(item, index) in widget" :key="index" class="form-material">
-        <el-button @click="addField(item.type)">{{ item.props.label }}</el-button>
-      </div>
+      <Meterials />
     </div>
-    <div class="form-container">
+    <div 
+      class="form-container" 
+      ref="formContainerRef" 
+    >
       <el-form
         ref="formRef"
-        :inline="jsonSchema.formConfig.layoutType === 'inline'"
-        class="form-inline"
+        :inline="formConfig.layoutType === 'inline'"
+        class="form"
         label-suffix=": "
         :model="formData"
+        :label-width="labelWidth"
+        :label-position="labelPosition"
+        :size="size"
       >
         <component
-          v-for="widget in jsonSchema.widgetList"
+          v-for="widget in widgetList"
           :key="widget.id"
           :is="getComponent(widget.type)"
           :widget="widget"
           v-model="formData[widget.id]"
-          :currentItem="currentItem"
           @click="currentItem = widget"
           :rules="getFinalRules(widget)"
           :style="widget.props?.style || {}"
           v-bind="widget.props"
-          :class="['form-item', { 'item-active': currentItem && currentItem.id === widget.id }]"
+          :class="['form-item', { 'item-active': currentItem && currentItem.id === widget.id }]" 
         >
         </component>
       </el-form>
+     
+      
     </div>
     <div class="form-item-attributes">
-      <attributes
-        v-if="currentItem"
-        v-model="currentItem"
-        :formData="formData[currentItem.id]"
-      ></attributes>
+      <attributes></attributes>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, onMounted, provide, ref, watch } from 'vue'
 import { v4 as uuidv4 } from 'uuid'
 import {
   ElInput,
@@ -61,15 +62,21 @@ import FormRadio from './formItem/radio.vue'
 import FormInput from './formItem/input.vue'
 import FormTimePick from './formItem/timePick.vue'
 import attributes from './attributes/attributes.vue'
+import Meterials from './materials/materials.vue'
 
 import { widget } from './widget'
-import draggable from 'vuedraggable'
 import type { FormConfig, JsonSchema, Widget } from './type'
 import { getFinalRules } from './type'
 
+
+
+
+
 const formRef = ref<InstanceType<typeof ElForm>>()
+const formContainerRef = ref<HTMLDivElement>()
 const currentItem = ref<Widget | null>(null)
 const formData = ref<Record<string, any>>({})
+
 
 const jsonSchema = ref<JsonSchema>({
   formConfig: {
@@ -83,6 +90,7 @@ const jsonSchema = ref<JsonSchema>({
     labelAlign: 'left',
     layoutType: 'default',
     size: 'default',
+ 
   },
   widgetList: [
     // {
@@ -131,10 +139,46 @@ const jsonSchema = ref<JsonSchema>({
     //   },
     // },
   ],
+});
+
+
+const formConfig = computed(() => {
+  return jsonSchema.value.formConfig
 })
-watch(jsonSchema.value, (newVal) => {
-  console.log('jsonSchema', newVal)
+
+const widgetList = computed(() => {
+  return jsonSchema.value.widgetList
 })
+
+provide('formConfig', formConfig);
+provide('widgetList', widgetList);
+provide('currentItem', currentItem);
+provide('formData', formData);
+provide('jsonSchema', jsonSchema);
+
+const labelWidth = computed(() => {
+  if(!!jsonSchema.value.formConfig && !!jsonSchema.value.formConfig.labelWidth) {
+    return `${jsonSchema.value.formConfig.labelWidth}px`
+  }
+  return '80px'
+});
+
+const labelPosition = computed(() => {
+  if(!!jsonSchema.value.formConfig && !!jsonSchema.value.formConfig.labelPosition) {
+    return jsonSchema.value.formConfig.labelPosition
+  }
+  return 'left'
+});
+
+
+
+const size = computed(() => {
+  if(!!jsonSchema.value.formConfig && !!jsonSchema.value.formConfig.size) {
+    return jsonSchema.value.formConfig.size
+  }
+  return 'default'
+});
+
 
 const componentMap: { [key in ComponentType]: any } = {
   input: FormInput,
@@ -156,6 +200,11 @@ const getComponent = (type: string) => {
   }
 }
 
+
+
+
+
+
 const addField = (type: string) => {
   const target = widget.find((item) => item.type === type)
   if (!target) return
@@ -165,9 +214,36 @@ const addField = (type: string) => {
     name: `${type}_${Date.now()}`,
   }
   jsonSchema.value.widgetList.push(field)
+
   formData.value[field.id] = '' // 初始化数据
   currentItem.value = field
 }
+
+const removeField = (id: string) => {
+  /* 寻找表单项 */
+  if (!id) return
+  const index = jsonSchema.value.widgetList.findIndex((item) => item.id === id);
+  if(index === -1) return;
+  /* 删除表单项 */
+  jsonSchema.value.widgetList.splice(index, 1);
+  delete formData.value[id];
+  /* 重置当前选中项 */
+  if(currentItem.value && currentItem.value.id === id) {
+    currentItem.value = null;
+  }
+  return;
+}
+
+
+
+
+
+
+
+
+
+
+
 </script>
 
 <style lang="scss" scoped>
