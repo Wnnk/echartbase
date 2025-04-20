@@ -21,12 +21,7 @@ const routes = [
     component: () => import('@/views/realtimeEchart/index.vue'),
   },
   {
-    path: '/form',
-    name: 'Form',
-    component: () => import('@/views/form/index.vue'),
-  },
-  {
-    path: '/',
+    path: '/dynamicForm',
     name: 'DynamicForm',
     component: () => import('@/views/dynamicForm/index.vue'),
   },
@@ -39,6 +34,16 @@ const routes = [
     path: '/waterMarkEchart',
     name: 'WaterMarkEchart',
     component: () => import('@/views/watermarkEchart/index.vue'),
+  },
+  {
+    path: '/commonTable',
+    name: 'CommonTable',
+    component: () => import('@/views/table/CommonTable/commonTable.vue'),
+  },
+  {
+    path: '/',
+    name: 'CommonForm',
+    component: () => import('@/views/form/commonForm/commonForm.vue'),
   },
 ]
 
