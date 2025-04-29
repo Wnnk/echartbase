@@ -5,6 +5,11 @@ const routes = [
   //   component: () => import('@/views/Home.vue'),
   // },
   {
+    path: '/',
+    name: 'TestAbort',
+    component: () => import('@/views/test/testAbort.vue'),
+  },
+  {
     // path: '/bigDataEchart',
     path: '/bigDataEchart',
     name: 'BigDataEchart',
@@ -33,7 +38,7 @@ const routes = [
   {
     path: '/waterMarkEchart',
     name: 'WaterMarkEchart',
-    component: () => import('@/views/watermarkEchart/index.vue'),
+    component: () => import('@/views/WaterMarkEchart/index.vue'),
   },
   {
     path: '/commonTable',
@@ -41,10 +46,20 @@ const routes = [
     component: () => import('@/views/table/CommonTable/commonTable.vue'),
   },
   {
-    path: '/',
+    path: '/commonForm',
     name: 'CommonForm',
     component: () => import('@/views/form/commonForm/commonForm.vue'),
   },
+  {
+    path: '/cacheForm',
+    name: 'cacheForm',
+    component: () => import('@/views/form/cacheForm/cacheForm.vue'),
+  },
+  {
+    path: '/paginateTable',
+    name: 'PaginateTable',
+    component: () => import('@/views/table/PaginateTable/paginateTable.vue'),
+  }
 ]
 
 export default routes

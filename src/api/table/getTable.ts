@@ -1,3 +1,5 @@
+import { reject } from "lodash"
+
 export interface User {
   date: string
   id: number
@@ -71,3 +73,44 @@ export const updateTable = (data: User[]): Promise<User[]> => {
     }, 200)
   })
 }
+
+
+export interface Equipment {
+  equipmentName: string
+  equipmentId: string
+  temperature: number
+  humidity: number
+  pressure: number
+  address:{
+    street: string
+    city: string
+    state: string
+  }
+}
+
+export const createTabledata = (start: number, end: number):  Promise<{data: Equipment[], count: number}> => {
+  const data: Equipment[] = [];
+  for (; start < end; start++) {
+    data.push({
+      equipmentName: `equipment${start}`,
+      equipmentId: `${start}`,
+      temperature: Math.floor(Math.random() * 100),
+      humidity: Math.floor(Math.random() * 100),
+      pressure: Math.floor(Math.random() * 100),
+      address: {
+        street: `street${start}`,
+        city: `city${start}`,
+        state: `state${start}`
+      }
+    })
+  }
+  return new Promise((resolve,reject) => {
+    setTimeout(() => {
+      resolve({data, count: 200})
+      // reject()
+      // resolve({data:[],count:0})
+    }, 2000)
+  })
+}
+
+

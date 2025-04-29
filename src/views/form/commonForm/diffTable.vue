@@ -1,17 +1,26 @@
 <template>
   <el-dialog v-model="isDiff" title="数据差异对比" width="70%">
-    <el-table :data="diff" border style="width: 100%">
-      <el-table-column prop="key" label="属性路径" width="250"></el-table-column>
-      <el-table-column label="旧值" width="300">
+    <el-table :data="diff" border style="width: 100%" >
+      <el-table-column prop="key" label="属性路径"></el-table-column>
+      <el-table-column label="旧值" >
         <template #default="{ row }">
           <span :class="{ 'diff-old': row.hasDiff }">{{ row.oldValue }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="新值" width="300">
+      <el-table-column label="新值" >
         <template #default="{ row }">
           <span :class="{ 'diff-new': row.hasDiff }">{{ row.newValue }}</span>
         </template>
       </el-table-column>
+      <template #append>
+        <tr class="echarts-table-row">
+          <td :colspan="3">
+            <div class="chart-container">
+              <DiffEchart :diff="diff" v-if="diff.length"/>
+            </div>
+          </td>
+        </tr>
+      </template>
     </el-table>
 
     <div class="diff-legend">
@@ -27,6 +36,7 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import DiffEchart from './diffEchart.vue'
 
 interface DiffItem {
   key: string
@@ -102,6 +112,7 @@ const formatDiffToArray = (
   }))
 }
 
+
 watch(
   () => [props.originData, props.newFormData],
   () => {
@@ -110,6 +121,7 @@ watch(
   },
   { immediate: true, deep: true },
 )
+
 </script>
 
 <style lang="scss" scoped>
@@ -148,5 +160,18 @@ watch(
 
 .diff-legend-marker.diff-new {
   background-color: #67c23a;
+}
+
+.echarts-table-row{
+  padding: 12px 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 300px;
+}
+.chart-container{
+  width: 50vw; 
+  height: 100%;
+  position: relative;
 }
 </style>
