@@ -39,8 +39,7 @@ const useFormCache = <T extends object>(cacheKey: string, options: CacheOptions 
   let db: any = null
 
   /* 后端存储 */
-  let queue = []
-  let version = null
+  let lastVersionData: VersionedData | null = null;
 
   const loadData = () => {
     if (cachelocation === 'localStorage') {
@@ -65,15 +64,15 @@ const useFormCache = <T extends object>(cacheKey: string, options: CacheOptions 
     }
   }
 
-  const loadFromServer = async (): Promise<VersionedData> => {
-    if (!url) return { data: {}, version: 0, lastModified: 0 }
-
+  const loadFromServer = async (): Promise<VersionedData | {}>  => {
+    if (!url) return {}
     try {
-      const response = await request.get(url, { key: cacheKey })
-      return response.data || { data: {}, version: 0, lastModified: 0 }
+      const response = await request.get(url, { key: cacheKey });
+      lastVersionData =  response;
+      return response.data || {}
     } catch (error) {
       console.error('从服务器获取缓存失败:', error)
-      return { data: {}, version: 0, lastModified: 0 }
+      return {}
     }
   }
 
@@ -89,10 +88,10 @@ const useFormCache = <T extends object>(cacheKey: string, options: CacheOptions 
         cacheData = loadData()
         return cacheData || {}
       case 'indexedDB':
-        cacheData = await readDataFromindeedDB(cacheKey)
+        cacheData = await readDataFromindexedDB(cacheKey)
         return cacheData || {}
       case 'server':
-        // TODO: implement mysql cache
+        loadFromServer()
         break
       default:
         return {}
@@ -119,7 +118,7 @@ const useFormCache = <T extends object>(cacheKey: string, options: CacheOptions 
       }
     }
   }
-
+  /* sessionStorage缓存 */
   const saveToSessionStorage = (data: any) => {
     try {
       sessionStorage.setItem(
@@ -140,7 +139,7 @@ const useFormCache = <T extends object>(cacheKey: string, options: CacheOptions 
       }
     }
   }
-
+  /* indexedDB缓存 */
   const saveToIndexDB = async (data: any) => {
     try {
       db = await openIndexDB()
@@ -149,7 +148,7 @@ const useFormCache = <T extends object>(cacheKey: string, options: CacheOptions 
       console.log(error)
     }
   }
-
+  /* 打开indexedDB */
   const openIndexDB = (): Promise<IDBDatabase> => {
     return new Promise((resolve, reject) => {
       let request = window.indexedDB.open('cacheForm', 1)
@@ -170,7 +169,7 @@ const useFormCache = <T extends object>(cacheKey: string, options: CacheOptions 
       }
     })
   }
-
+  /* 写入indexedDB */
   const writeDataToIndexedDB = async (data: any): Promise<void> => {
     if (!db) {
       db = await openIndexDB()
@@ -201,8 +200,8 @@ const useFormCache = <T extends object>(cacheKey: string, options: CacheOptions 
       }
     })
   }
-
-  const readDataFromindeedDB = async (key: string): Promise<any> => {
+  /* 从indexedDB读取数据 */
+  const readDataFromindexedDB = async (key: string): Promise<any> => {
     if (!db) {
       db = await openIndexDB()
     }
@@ -221,35 +220,72 @@ const useFormCache = <T extends object>(cacheKey: string, options: CacheOptions 
     })
   }
 
+  /* 从indexedDB删除数据 */
+  const deleteDataFromindexedDB = async (key: string): Promise<void> => {
+    if (!db) {
+      db = await openIndexDB()
+    }
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction('cacheForm', 'readwrite')
+      const objectStore = transaction.objectStore('cacheForm')
+      const request = objectStore.delete(key)
+      request.onsuccess = () => {
+        console.log('indexedDB数据删除成功')
+        resolve()
+      }
+      request.onerror = (event: Event) => {
+        console.error('indexedDB数据删除失败', event)
+        reject((event.target as IDBRequest).error)
+      }
+    })
+  }
+
+
+
+  /* 保存到服务器 */
   const saveToServer = async (data: any) => {
     if (!shouldUseVersionControl) {
       console.warn('无法使用服务器缓存，请检查配置')
       return
     }
-    if (debounceTimer) {
-      queue.push(data)
-      clearTimeout(debounceTimer)
-    }
-    debounceTimer = setTimeout(async () => {
-      try {
-        /* 获取最新版本 */
-        const latest = await request.get(url, { key: cacheKey })
-        const lastVersion = latest.data?.version || 0
-        const versionedData = {
-          data: queue.length > 1 ? queue.length - 1 : data,
-          latestVersion: lastVersion,
-          lastModified: Date.now(),
-        }
-        const response = await request.post(url, versionedData)
-        /* 本地更新版本号 */
-        if (response.data.version) {
-          version = response.data.version
-        }
-        queue = []
-      } catch (error) {
-        console.error('保存到服务器失败:', error)
+    try {
+      /* 获取最新版本 */
+      let latest = null;
+      if(lastVersionData === null) {
+        latest = await request.get(url, { key: cacheKey })
       }
-    }, debounceTime)
+      latest = lastVersionData || latest
+      const lastVersion = latest.data?.version || 0
+      const versionedData = {
+        data: data,
+        version: lastVersion + 1,
+        lastModified: Date.now(),
+      }
+      /* 本地更新 */
+      lastVersionData = versionedData;
+      /* 发送请求 */
+      const response = await request.post(url, versionedData);
+      console.log('数据保存成功')
+    } catch (error) {
+      console.error('保存到服务器失败:', error)
+    }
+  }
+
+
+  /* 发送删除请求到服务器 */
+  const deleteFromToServer = async (cacheKey: string) => {
+    if (!shouldUseVersionControl) {
+      console.warn('无法使用服务器缓存，请检查配置');
+      return;
+    }
+    try {
+      const response = await request.delete(`${url}/${cacheKey}`);
+      console.log('数据删除成功')
+
+    }catch(error) {
+      console.error('删除缓存失败:', error)
+    }
+
   }
 
   const saveToCache = (data: any) => {
@@ -282,7 +318,6 @@ const useFormCache = <T extends object>(cacheKey: string, options: CacheOptions 
   /* 自动保存 */
   const setupAutoSave = (data: any) => {
     if (!autoSave) return
-
     watch(
       () => data,
       (newVal) => {
@@ -297,6 +332,27 @@ const useFormCache = <T extends object>(cacheKey: string, options: CacheOptions 
     )
   }
 
+
+  /* 清除缓存 */
+  const clearCache = () => {
+    switch (cachelocation) {
+      case 'localStorage':
+        localStorage.removeItem(cacheKey)
+        break
+      case 'sessionStorage':
+        sessionStorage.removeItem(cacheKey)
+        break
+      case 'indexedDB':
+        deleteDataFromindexedDB(cacheKey)
+       break
+      case 'server':
+        deleteFromToServer(cacheKey)
+        break
+      default:
+        break
+    }
+  }
+
   /* 清除定时器 */
   onUnmounted(() => {
     if (debounceTimer) {
@@ -308,6 +364,7 @@ const useFormCache = <T extends object>(cacheKey: string, options: CacheOptions 
     loadFromCache,
     saveNow,
     setupAutoSave,
+    clearCache,
   }
 }
 

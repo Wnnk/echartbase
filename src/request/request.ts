@@ -128,7 +128,9 @@ class Request {
         localStorage.setItem('token', '')
         ElMessage.error('登录失效，请重新登录')
         Promise.reject(new Error('token失效'))
-        break
+        break;
+      case 1004:
+        
       case 2000:
         break
     }
@@ -182,6 +184,24 @@ class Request {
       this.requests++
       try {
         return await this.instance.post(url, data, config)
+      } finally {
+        this.requests--
+        this.processQueue()
+      }
+    }
+  }
+
+  public delete = async (url: string,  config:AxiosRequestConfig = {}): Promise<any> => {
+    if (this.requests >= this.maxRequests) {
+      return new Promise((resolve, reject) => {
+        this.queue.push(() => {
+          this.instance.delete(url, config).then(resolve).catch(reject)
+        })
+      })
+    } else {
+      this.requests++
+      try {
+        return await this.instance.delete(url, config)
       } finally {
         this.requests--
         this.processQueue()
