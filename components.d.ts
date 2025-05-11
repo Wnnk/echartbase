@@ -10,6 +10,8 @@ declare module 'vue' {
   export interface GlobalComponents {
     AddForm: typeof import('./src/components/select/addForm.vue')['default']
     DatePicker: typeof import('./src/components/datePicker/index.vue')['default']
+    DiffTable: typeof import('./src/components/diffTable/diffTable.vue')['default']
+    DiffTest: typeof import('./src/components/diffTable/diffTest.vue')['default']
     ElAside: typeof import('element-plus/es')['ElAside']
     ElButton: typeof import('element-plus/es')['ElButton']
     ElButtonGroup: typeof import('element-plus/es')['ElButtonGroup']

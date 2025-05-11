@@ -34,14 +34,19 @@
       <el-button>Cancel</el-button>
     </el-form-item>
   </el-form>
-  <DiffTable v-if="isDiff" :originData="originData" v-model="isDiff" :newFormData="newFormData" />
+  <DiffTableTest
+    v-if="isDiff"
+    :originData="originData"
+    v-model="isDiff"
+    :newFormData="newFormData"
+  />
 </template>
 
 <script lang="ts" setup>
 import { reactive, ref } from 'vue'
 import cloneDeep from 'lodash/cloneDeep'
-import DiffTable from './diffTable.vue'
 
+import DiffTableTest from './diffTableTest.vue'
 
 const form = ref({
   equipmentName: 'A',

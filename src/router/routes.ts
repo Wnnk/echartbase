@@ -63,7 +63,7 @@ const routes = [
   {
     path: '/detailDialogTable',
     name: 'detailDialogTable',
-    component:() => import('@/views/table/detailDialogTable/detailDialogTable.vue'),
+    component: () => import('@/views/table/detailDialogTable/detailDialogTable.vue'),
   },
   {
     path: '/editDialogTable',
@@ -88,14 +88,18 @@ const routes = [
   {
     path: '/idSelect',
     name: 'idSelect',
-    component: () => import('@/views/Select/idSelect.vue')
+    component: () => import('@/views/Select/idSelect.vue'),
+  },
+  {
+    path: '/useDialog',
+    name: 'useDialog',
+    component: () => import('@/views/Dialog/useDialog.vue'),
   },
   {
     path: '/',
-    name: 'useDialog',
-    component: () => import('@/views/Dialog/useDialog.vue')
-  }
-
+    name: 'useTable',
+    component: () => import('@/views/table/useTable.vue'),
+  },
 ]
 
 export default routes
