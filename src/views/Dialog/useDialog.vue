@@ -3,6 +3,7 @@
     <h1>Dialog使用界面</h1>
     <el-button @click="selectType">createDialog</el-button>
     <el-button @click="selectLogin">loginDialog</el-button>
+    <el-button @click="outToken">token过期，弹窗登录</el-button>
   </div>
 </template>
 
@@ -10,6 +11,7 @@
 import { createDialog } from '@/utils/createDialog'
 import getTypeComponent from './components/getType.vue'
 import Login from '@/views/Dialog/components/login.vue'
+import request from '@/request/request'
 import { ref } from 'vue'
 import _ from 'lodash'
 
@@ -36,6 +38,16 @@ const selectLogin = async () => {
   try {
     const result = await loginDialog()
   } catch (error) {}
+}
+
+const outToken = async () => {
+  localStorage.setItem('token', 'token1');
+  /* 这里模拟token过期的情况 */
+  try {
+    const result = await request.get('/outToken')
+  } catch (error) {
+    console.log(error)
+  }
 }
 </script>
 

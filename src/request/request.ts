@@ -2,7 +2,9 @@ import axios, { AxiosHeaders } from 'axios'
 import type { AxiosInstance, AxiosError, AxiosResponse, AxiosRequestConfig, Axios } from 'axios'
 import { ElMessage } from 'element-plus'
 import type { Router} from 'vue-router'
-
+import { createDialog } from '@/utils/createDialog'
+import Login from '@/views/Dialog/components/login.vue'
+import { ca } from 'element-plus/es/locale/index.mjs'
 
 interface RequestController {
   controller: AbortController
@@ -54,7 +56,7 @@ class Request {
         ...config,
         signal: controller.signal,
         headers: new AxiosHeaders({
-          'x-access-token': token,
+          'authorization': token,
         }),
         requestId,
       }
@@ -129,12 +131,28 @@ class Request {
         ElMessage.error('登录失效，请重新登录')
         Promise.reject(new Error('token失效'))
         break;
-      case 1004:
-        
+      case 1001:
+        this.loginToUpdateToken()
       case 2000:
         break
     }
   }
+
+  private loginToUpdateToken = async () => {
+    const loginDialog = createDialog(Login, {
+      title: 'axios登录',
+      fullscreen: true,
+      lock: true,
+      message: '登录信息已过期，请重新登录',
+      showClose: false,
+    })
+    try {
+      const result = await loginDialog()
+    } catch (error) {
+      
+    }
+  }
+
   /* 处理队列 */
   private processQueue = () => {
     if (this.requests < this.maxRequests && this.queue.length > 0) {

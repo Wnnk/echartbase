@@ -56,11 +56,6 @@ const routes = [
     component: () => import('@/views/form/cacheForm/cacheForm.vue'),
   },
   {
-    path: '/paginateTable',
-    name: 'PaginateTable',
-    component: () => import('@/views/table/PaginateTable/paginateTable.vue'),
-  },
-  {
     path: '/detailDialogTable',
     name: 'detailDialogTable',
     component: () => import('@/views/table/detailDialogTable/detailDialogTable.vue'),
@@ -100,6 +95,11 @@ const routes = [
     name: 'useTable',
     component: () => import('@/views/table/useTable.vue'),
   },
+  {
+    path: '/useForm',
+    name: 'useForm',
+    component: ()=> import("@/views/form/useForm.vue")
+  }
 ]
 
 export default routes

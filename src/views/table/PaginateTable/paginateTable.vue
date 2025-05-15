@@ -1,101 +1,71 @@
+<!-- 
+  @description: 带分页器的table组件
+-->
 <template>
   <div>
-    <el-table :data="tableData" style="width: 70vw" v-loading="status === 1">
-      <el-table-column label="Equipment Name" prop="equipmentName" />
-      <el-table-column label="temperature" prop="temperature"></el-table-column>
-      <el-table-column label="humidity" prop="humidity"></el-table-column>
-      <el-table-column label="pressure" prop="pressure"></el-table-column>
-      <!-- <template #empty v-if="status === 3">
-        <div>
-          <el-button>Retry</el-button>
-        </div>
-      </template>
-      <template #empty v-if="status === 2 && tableData.length === 0">
-        <div>
-          <p>数据为空</p>
-        </div>
-      </template> -->
+    <div v-if="status === 3">有错误<el-button @click="reTry">重试</el-button></div>
+    <el-table v-bind="$attrs" :data="tableData" v-loading="status === 1">
+     <slot></slot>
     </el-table>
-    <br>
-    <el-pagination
-      :total="total"
-      :page-size="pageSize"
-      v-model="currentPage"
-      @current-change="turnPage"
+    <el-pagination 
       background 
-      layout="prev, pager, next"
-     
-    />
+      layout="total,size , prev, pager, next" 
+      :total="total"
+      :current-page="currentPage"
+      @current-change="currentChange" 
+    ></el-pagination>
   </div>
+
 </template>
 
 <script setup lang='ts'>
-import { onMounted, ref } from 'vue'
-import { createTabledata } from '@/api/table/getTable';
-import type { Equipment } from '@/api/table/getTable';
-import request from '@/request/request';
-import axios from 'axios';
-
-
-
-
-const tableData = ref<Array<Equipment>>([]);
-const currentPage = ref(1);
-const pageSize = ref(10);
-const total = ref(0);
-/* 0:未初始化, 1:加载中 2:加载完成 3:加载失败 */
+import { ref, onMounted } from 'vue'
+const props = defineProps({
+  store: {
+    type: Object,
+    required: true
+  },
+})
+const tableData = ref([]);
 const status = ref(0);
+const total = ref(0);
+const currentPage = ref(1);
+let preParams = {};
 
 
-let currentAbortController: AbortController | null = null;
+const reTry = () => {
+  fetch(preParams);
+} 
 
-const init = async (start: number, end: number) => {
+const fetch = async (params: any) => {
+  return props.store.load(params);
+}
+
+const load = async (options: any = {page: 1}) => {
   try {
-    // 取消之前的请求
-    if (currentAbortController) {
-      currentAbortController.abort('取消旧请求');
-      currentAbortController = null;
-    }
-
-    // 创建新的控制器
-    currentAbortController = new AbortController();
-    
+    const params =  props.store.writter({
+      page: options.page,
+      count: options.count || total.value,
+    })
     status.value = 1;
-    const res = await request.get(`/equipment?start=${start}&end=${end}`, {}, {
-      signal: currentAbortController.signal  // 关键：必须传递signal
-    });
-
-
-    // 只有未被取消的请求才会执行到这里
-    tableData.value = res.data;
-    currentPage.value = 1;
-    pageSize.value = 10;
-    total.value = res.count;
+    preParams = params;
+    const result = await props.store.load(params);
+    const { data, count, page } = props.store.reader(result);
+    tableData.value = data;
+    total.value = count;
+    currentPage.value = page;
     status.value = 2;
-    
   } catch (error) {
-    // 区分是取消错误还是真实错误
-    if (axios.isCancel(error)) {
-      console.log('请求被取消:', error.message);
-    } else {
-      status.value = 3;
-      console.error('请求错误:', error);
-    }
-  } finally {
-    currentAbortController = null;
+    status.value = 3;
   }
 }
-const turnPage = (page: number) => {
-  const start = (page - 1) * pageSize.value;
-  const end = start + pageSize.value;
-  init(start, end);
+const currentChange = (nextPage: number) => {
+  load({page: nextPage});
 }
 
 onMounted(() => {
-  init(0,10);
-});
-
-
+  load();
+})
 </script>
 
 <style lang='scss' scoped>
