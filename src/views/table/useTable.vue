@@ -1,25 +1,66 @@
 <template>
   <div>
-    <h1>使用Table组件界面</h1>
-    <el-button @click="handleDiffTable">Diff Table</el-button>
-    <diff-table v-if="visiableDiff" :origin-data="table1" :new-data="table2" />
-    <!-- <diff-test :origin-data="table1" :new-data="table2" /> -->
+    <h1>download(含表头,表尾)组件</h1>
+    <xlsx-table />
   </div>
   <div>
-    <h1>带分页器的table组件</h1>
-    <paginate-table  :store="store">
-      <el-table-column prop="date" label="日期"></el-table-column>
-      <el-table-column prop="name" label="姓名"></el-table-column>
-      <el-table-column prop="address" label="地址"></el-table-column>
-    </paginate-table>
+    <h1>XLSX Table</h1>
+    <download v-if="false"/>
   </div>
+  <div>
+    <h1>loading table组件</h1>
+    <load-table v-if="false"></load-table>
+  </div>
+   <div>
+      <h1>checkboxTable组件</h1>
+      <checkbox-table :data="table" :checkgroup="checkgroup" v-if="TableStatus === 2"/>
+    </div>
+    <div>
+      <h1>使用Table组件界面</h1>
+      <el-button @click="handleDiffTable">Diff Table</el-button>
+      <diff-table v-if="visiableDiff" :origin-data="table1" :new-data="table2" />
+      <!-- <diff-test :origin-data="table1" :new-data="table2" /> -->
+    </div>
+    <div>
+      <h1>带分页器的table组件</h1>
+      <paginate-table  :store="store">
+        <el-table-column prop="date" label="日期"></el-table-column>
+        <el-table-column prop="name" label="姓名"></el-table-column>
+        <el-table-column prop="address" label="地址"></el-table-column>
+      </paginate-table>
+    </div>
+ 
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import diffTable from '@/components/diffTable/diffTable.vue'
 import diffTest from '@/components/diffTable/diffTest.vue'
 import paginateTable from './PaginateTable/paginateTable.vue'
+import checkboxTable from './threadTable/checkboxTable.vue'
+import loadTable from './threadTable/loadTable.vue'
+import download from './download/download.vue'
+import checkTable from './threadTable/checkTable.vue'
+import xlsxTable from './xlsxTable/xlsxTable.vue'
+import { getTableData, getDefined } from './tableData'
+
+const table =ref([])
+const TableStatus = ref(0);
+const checkgroup = ref([]);
+const api = async () => {
+  try {
+    TableStatus.value = 1
+    const res = await getTableData() as any
+    const defined = await getDefined() as any
+    checkgroup.value = defined
+    table.value = res.data
+    TableStatus.value = 2
+  } catch (error) {
+    TableStatus.value = 3
+  }
+}
+api()
+
 const table1 = ref([
   {
     id: 10,
@@ -171,6 +212,8 @@ const store = ref({
     throw new Error('结构转换错误')
   }
 })
+
+
 </script>
 
 <style lang="scss" scoped></style>
