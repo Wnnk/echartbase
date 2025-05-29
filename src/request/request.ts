@@ -4,7 +4,7 @@ import { ElMessage } from 'element-plus'
 import type { Router} from 'vue-router'
 import { createDialog } from '@/utils/createDialog'
 import Login from '@/views/Dialog/components/login.vue'
-import { ca } from 'element-plus/es/locale/index.mjs'
+
 
 interface RequestController {
   controller: AbortController

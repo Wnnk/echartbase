@@ -12,12 +12,13 @@
       v-if="status !== 3"
     >
       <el-table-column type="selection" width="55" />
+      <el-table-column type="expand" width="55"></el-table-column>
       <el-table-column fixed="left" label="id" width="100" prop="id"> </el-table-column>
       <el-table-column fixed="left" label="日期" prop="date" width="150"> </el-table-column>
       <el-table-column label="配送信息">
-        <el-table-column prop="name" label="姓名" width="120"></el-table-column>
-        <el-table-column prop="province" label="省份" width="120"></el-table-column>
-        <el-table-column prop="city" label="城市" width="120"></el-table-column>
+        <el-table-column prop="name" label="姓名" width="120" align="left"></el-table-column>
+        <el-table-column prop="province" label="省份" width="120" align="center"></el-table-column>
+        <el-table-column prop="city" label="城市" width="240" align="right"></el-table-column>
         <el-table-column prop="area" label="区县" width="120"></el-table-column>
         <el-table-column prop="address" label="地址" width="200"></el-table-column>
         <el-table-column prop="zip" label="邮编" width="120"></el-table-column>
@@ -31,14 +32,14 @@
         </template>
       </el-table-column>
 
-      <el-table-column fixed="right" label="操作">
+      <el-table-column fixed="right" label="操作" >
         <template #default="scope">
           <el-button size="small">查看</el-button>
           <el-button size="small">编辑</el-button>
         </template>
       </el-table-column>
     </el-table>
-    <el-button v-if="status === 3" type="primary" @click="api(currentPage + 1)">重试</el-button>
+    <el-button v-if="status === 3" type="primary" @click="api(currentPage)">重试</el-button>
     <el-pagination
       background
       layout="total,size , prev, pager, next"
@@ -52,12 +53,15 @@
 
   <el-button @click="downloadExcel('table', 'table', selectionData)">本页download</el-button>
   <el-button @click="downloadExcel('table', 'table', allTableData)">全部download</el-button>
+
 </template>
 
 <script setup lang="ts">
 import { computed, h, nextTick, onMounted, ref } from 'vue'
-import * as XLSX from 'xlsx'
+// import * as XLSX from 'xlsx'
+import * as XLSX from "xlsx-js-style";
 import { getXlsxData, getAllData } from './xlsxData'
+
 
 /* 表格 */
 const tableRef = ref()
@@ -78,7 +82,6 @@ const api = async (page: number) => {
   try {
     status.value = 1
     const res = (await getXlsxData((page - 1) * 5, 5)) as any
-
     tableData.value = res.data
     total.value = res.total
     currentPage.value = res.page
@@ -116,15 +119,17 @@ onMounted(() => {
 const getTableData = (excludeLabel: string[] = []): any[] => {
   /* 1.将实例的一级表头转为结构化数据 */
   const headers = tableRef.value.columns
-    .filter((col: any) => col.type !== 'selection' && !excludeLabel.includes(col.label)) // Skip selection columns
+    .filter((col: any) => col.type !== 'selection' && col.type !== 'expand' && !excludeLabel.includes(col.label)) // Skip selection columns
     .map((col: any) => {
       return {
         label: col.label,
         children: col.children || [],
         prop: col.property,
+        width: col.width,
+        algin: col.align ?? 'is-left',
       }
     })
-
+    
   /* 2.将递归转为结构化数据 */
   const toData = (headers: any[]) => {
     let result: any[] = []
@@ -137,11 +142,14 @@ const getTableData = (excludeLabel: string[] = []): any[] => {
         result.push({
           label: header.label,
           children: toData(header.children),
+          align: header.align ?? 'is-left',
         })
       } else {
         result.push({
           label: header.label,
           prop: header.prop || header.property,
+          width: header.width,
+          align: header.align ?? 'is-left',
         })
       }
     })
@@ -155,13 +163,18 @@ const downloadExcel = (sheetName: string, fileName: string, selectionData: any =
   /* 获取表头数据 */
   const tableHeader = getTableData(['标签', '操作'])
   const excelHeader = buildHeader(tableHeader)
+  /* 获取表头行数 */
   const headerRows = excelHeader.length
+
+  /* 获取表体数据 */
   let dataList = extracData(selectionData, tableHeader)
   excelHeader.push(...dataList, [])
   let merges = doMerges(excelHeader)
   let ws = aoa_to_sheet(excelHeader, headerRows)
-  console.log(excelHeader)
+ 
+  /* 合并单元格 */
   ws['!merges'] = merges
+  /* 冻结 */
   ws['!freeze'] = {
     xSplit: '1',
     ySplit: '' + headerRows,
@@ -169,13 +182,21 @@ const downloadExcel = (sheetName: string, fileName: string, selectionData: any =
     activePane: 'bottomRight',
     state: 'frozen',
   }
-  ws['!cols'] = [{ wpx: 165 }]
+  /* 设置列宽 */
+  const headerStyle = getHeaderStyle(tableHeader)
+  ws['!cols'] = headerStyle.map((style) => ({ wpx: style.width}))
+  /* 设置align */
+  ws = setHeaderAlign(headerStyle, ws)
+
+ 
+
+  
+
   let workbook: XLSX.WorkBook = {
     SheetNames: [sheetName],
     Sheets: {},
   }
   workbook.Sheets[sheetName] = ws
-
   return XLSX.writeFile(workbook, fileName + '.xlsx', {
     bookType: 'xlsx',
     bookSST: false,
@@ -196,7 +217,6 @@ const buildHeader = (data: any[]) => {
   excelHeader
     .filter((e) => e.length < max)
     .forEach((e) => pushRowSpanPlaceHolder(e, max - e.length))
-  // console.log(excelHeader)
   return excelHeader
 }
 
@@ -240,13 +260,14 @@ const getHeader = (headers: any[], excelHeader: any[], deep: number, perOffset: 
 const extracData = (selcetedData: any[], tableHeader: any[]) => {
   let headerList = flatHeader(tableHeader)
   let excelRows: any[] = []
-  /* 取其中一个数据获取key(所有数据的prop都是相同的) */
+  if(selcetedData.length === 0) return excelRows
+
+  /* 取其中data中一个数据获取key(所有数据的prop都是相同的) */
   let dataKeys = new Set(Object.keys(selcetedData[0]))
 
   selcetedData.some((e) => {
     if (e.children && e.children.length > 0) {
       let childKeys = Object.keys(e.children[0])
-
       for (let i = 0; i < childKeys.length; i++) {
         dataKeys.delete(childKeys[i])
       }
@@ -257,10 +278,15 @@ const extracData = (selcetedData: any[], tableHeader: any[]) => {
   flatData(selcetedData, (list: any[]) => {
     excelRows.push(buildExcelRow(dataKeys, headerList, list))
   })
-
+  
   return excelRows
 }
 
+/** 
+ * @description: 拍扁头部获取prop
+ * @param {any[]} header 表头数据
+ * @returns {string[]} prop数组
+  */
 const flatHeader = (header: any[]) => {
   let result: any[] = []
   header.forEach((item) => {
@@ -424,6 +450,14 @@ const aoa_to_sheet = (data: any[], headerRows: number) => {
       ws[cell_ref] = cell
     }
   }
+  // ws['C3'].s.alignment = {
+  //   horizontal: "right",
+  //   indent: 0,
+  //   vertical: "top",
+  //   underline :true,
+  //   wrapText: 1
+  // }
+  // ws['C3'].v = "测试"
   if (range.s.c < 10000000) {
     ws['!ref'] = XLSX.utils.encode_range(range)
   }
@@ -452,14 +486,69 @@ const pushColSpanPlaceHolder = (arr: any[], count: number) => {
   }
 }
 
-const s2ab = (s: string) => {
-  let buf = new ArrayBuffer(s.length)
-  let view = new Uint8Array(buf)
-  for (let i = 0; i !== s.length; ++i) {
-    view[i] = s.charCodeAt(i) & 0xff
+/** 
+ * @description： 设置表头宽度
+ * @param {any[]} headers 表头数组
+ * @returns {number[]} colWidths 列宽数组
+  */
+  const getHeaderWidth = (headers: number[]): number[] => {
+    const cols:number[] = [];
+    headers.forEach((header: any) => {
+      if (header.children && header.children.length > 0) {
+        cols.push(...getHeaderWidth(header.children));
+      }else {
+        cols.push(header.width ?? 100);
+      }
+    });
+    return cols;
   }
-  return buf
+
+
+/** 
+ * @description: 获取表头列样式
+ * @param: {any[]} headers 表头数组
+ * @returns: {any[]} colStyles 列样式数组
+  */
+  const getHeaderStyle = (headers: any[]): any[] => {
+    const colStyles: any[] = [];
+    headers.forEach((header: any) => {
+      if (header.children && header.children.length > 0) {
+        colStyles.push(...getHeaderStyle(header.children));
+      } else {
+        colStyles.push({
+          align: header.align ?? 'is-left',
+          width: header.width ?? 100,
+        } as any);
+      }
+    });
+    return colStyles;
+  }
+
+/** 
+ * @description: 设置样式align
+ * @param {any[]} headerStyle 表头样式数组
+ * @param {any} worksheet 工作表对象
+**/
+const setHeaderAlign = (headerStyle: any[], worksheet: any) => {
+  if(!worksheet['!ref']) return worksheet;
+  const range = XLSX.utils.decode_range(worksheet['!ref']);
+  for (let col = 0; col < headerStyle.length; col++) {
+    for (let row = range.s.r; row <= range.e.r; row++) {
+      const cell_ref = XLSX.utils.encode_cell({r: row, c: col});
+      const cell = worksheet[cell_ref];
+      if(!cell) continue;
+      if(!cell.s) cell.s = {};
+      cell.s.alignment = {
+        ...cell.s.alignment,
+        horizontal: headerStyle[col].align === 'is-center' ? 'center' : headerStyle[col].align === 'is-right' ? 'right' : 'left',
+      }
+      console.log(cell, cell.s.alignment)
+    }
+  }
+  return worksheet;
 }
+
+
 </script>
 
 <style lang="scss" scoped></style>

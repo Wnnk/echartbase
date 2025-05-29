@@ -15,8 +15,6 @@ export function createDialog(component: any, config: any) {
   return () => {
     return new Promise((resolve, reject) => {
       const visiable = ref(true)
-      /* 弹窗状态  0:未初始化， 1：加载中 ,2：成功，3：失败 */
-      const status = ref(1)
       const dialogUnMount = () => {
         visiable.value = false
       }

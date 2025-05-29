@@ -1,5 +1,9 @@
 <template>
   <div>
+    <h1>动态列</h1>
+    <col-table :columns="columns" :data="table1" :height="300"/>
+  </div>
+  <div>
     <h1>读取XLSX table组件</h1>
     <ReadXlsx />
   </div>
@@ -47,6 +51,8 @@ import checkTable from './threadTable/checkTable.vue'
 import xlsxTable from './xlsxTable/xlsxTable.vue'
 import { getTableData, getDefined } from './tableData'
 import ReadXlsx from './xlsxTable/readXlsx.vue'
+import colTable from './colTable/colTable.vue'
+import { first } from 'lodash'
 
 const table = ref([])
 const TableStatus = ref(0)
@@ -110,6 +116,8 @@ const table1 = ref([
       age: 35,
     },
   },
+
+  
 ])
 const table2 = ref([
   {
@@ -216,6 +224,55 @@ const store = ref({
     throw new Error('结构转换错误')
   },
 })
+
+
+
+
+/* 动态列数据 */
+const columns = ref([
+  {
+    label: 'ID',
+    prop: 'id',
+    width: 100,
+  },
+  {
+    label: '日期',
+    prop: 'date',
+    width: 150,
+  },
+  {
+    label: '姓名',
+    prop: 'name',
+    width: 150,
+  },
+  {
+    label: '地址',
+    prop: 'address',
+    width: 200,
+  },
+  {
+    label: '用户',
+    width: 360,
+    children: [
+      {
+        label: '用户ID',
+        width: 120,
+        prop: 'user.id'
+      },
+      {
+        label: '用户姓名',
+        width: 120,
+        prop: 'user.name'
+      },
+      {
+        label: '用户年龄',
+        width: 120,
+        prop: 'user.age'
+      }
+    ]
+  }
+
+])
 </script>
 
 <style lang="scss" scoped></style>
