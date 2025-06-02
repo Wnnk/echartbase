@@ -1,0 +1,27 @@
+.table {
+  overflow-x: auto;
+  // background-color: #f2f3f5;
+}
+.table-tool {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #ffffff;
+  padding: 8px;
+  border-radius: 8px;
+}
+
+.table-container {
+  padding: 10px;
+  border-radius: 8px;
+  margin: 10px 0;
+  background-color: #ffffff;
+}
+
+.table-footer {
+  background-color: #ffffff;
+  padding: 8px;
+  border-radius: 8px;
+  display: flex;
+  justify-content: flex-end;
+}

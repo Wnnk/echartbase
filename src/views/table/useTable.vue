@@ -1,7 +1,7 @@
 <template>
-  <div>
+  <div :style="{ background: '#f2f3f5' }">
     <h1>动态列</h1>
-    <col-table :columns="columns" :data="table1" :height="300"/>
+    <col-table :columns="columns" :data="table1" :options="{ indexLabel: 'No.', loading: true }" />
   </div>
   <div>
     <h1>读取XLSX table组件</h1>
@@ -116,8 +116,6 @@ const table1 = ref([
       age: 35,
     },
   },
-
-  
 ])
 const table2 = ref([
   {
@@ -225,9 +223,6 @@ const store = ref({
   },
 })
 
-
-
-
 /* 动态列数据 */
 const columns = ref([
   {
@@ -257,21 +252,20 @@ const columns = ref([
       {
         label: '用户ID',
         width: 120,
-        prop: 'user.id'
+        prop: 'user.id',
       },
       {
         label: '用户姓名',
         width: 120,
-        prop: 'user.name'
+        prop: 'user.name',
       },
       {
         label: '用户年龄',
         width: 120,
-        prop: 'user.age'
-      }
-    ]
-  }
-
+        prop: 'user.age',
+      },
+    ],
+  },
 ])
 </script>
 
