@@ -1,7 +1,17 @@
 <template>
   <div :style="{ background: '#f2f3f5' }">
     <h1>动态列</h1>
-    <col-table :columns="columns" :data="table1" :options="{ indexLabel: 'No.', loading: true }" />
+    <col-table
+      v-model:search-params="searchParams"
+      v-model:checked-options="checkedOptions"
+      :columns="columns" 
+      :data="data" 
+      :options="{ indexLabel: 'No.', loading: true }" 
+      :total="total"
+      @delete-rows="deleteRows"
+      @add-data="addData"
+      :status="status"
+    />
   </div>
   <div>
     <h1>读取XLSX table组件</h1>
@@ -40,9 +50,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import diffTable from '@/components/diffTable/diffTable.vue'
-import diffTest from '@/components/diffTable/diffTest.vue'
 import paginateTable from './PaginateTable/paginateTable.vue'
 import checkboxTable from './threadTable/checkboxTable.vue'
 import loadTable from './threadTable/loadTable.vue'
@@ -52,7 +61,9 @@ import xlsxTable from './xlsxTable/xlsxTable.vue'
 import { getTableData, getDefined } from './tableData'
 import ReadXlsx from './xlsxTable/readXlsx.vue'
 import colTable from './colTable/colTable.vue'
-import { first } from 'lodash'
+import { getTableColumns, getColumnsData } from './colTable/api'
+import type { ColumnType, TableOptions } from './colTable/type'
+
 
 const table = ref([])
 const TableStatus = ref(0)
@@ -223,50 +234,79 @@ const store = ref({
   },
 })
 
-/* 动态列数据 */
-const columns = ref([
-  {
-    label: 'ID',
-    prop: 'id',
-    width: 100,
+
+const columns = ref<ColumnType[]>([])
+const total = ref(0);
+const checkedOptions = ref<ColumnType[]>([]);
+const data = ref<any[]>([]);
+const status = ref(0)
+const searchParams = ref({
+	page: 0,
+	size: 10,
+})
+onMounted(() => {
+  columnApi()
+})
+const columnApi = async () => {
+  try {
+    columns.value = await getTableColumns() as ColumnType[]
+    checkedOptions.value = JSON.parse(JSON.stringify(columns.value))
+    dataApi()
+    // console.log(checkedOptions.value)
+  } catch (error) {
+    console.log(error)
+  }
+}
+const dataApi = async () => {
+  try {
+    status.value = 1
+    const res = await getColumnsData(searchParams.value) as any
+    data.value = res.data;
+    total.value = res.total;
+    status.value = 2
+  } catch (error) {
+    status.value = 3
+  }
+}
+
+watch(
+  () => searchParams.value,
+  () => {
+    dataApi()
   },
-  {
-    label: '日期',
-    prop: 'date',
-    width: 150,
-  },
-  {
-    label: '姓名',
-    prop: 'name',
-    width: 150,
-  },
-  {
-    label: '地址',
-    prop: 'address',
-    width: 200,
-  },
-  {
-    label: '用户',
-    width: 360,
-    children: [
-      {
-        label: '用户ID',
-        width: 120,
-        prop: 'user.id',
-      },
-      {
-        label: '用户姓名',
-        width: 120,
-        prop: 'user.name',
-      },
-      {
-        label: '用户年龄',
-        width: 120,
-        prop: 'user.age',
-      },
-    ],
-  },
-])
+)
+
+
+
+onMounted(() => {
+	// 尝试搜索
+	searchParams.value = {
+		...searchParams.value,
+		page: 1
+	}
+})
+
+const deleteRows = (rows: any[]) => {
+  try {
+    status.value = 1
+    data.value = data.value.filter((item) => !rows.includes(item))
+    dataApi()
+    status.value = 2
+  } catch (error) {
+    status.value = 3
+  }
+}
+
+const addData = (row: any) => {
+  try {
+    status.value = 1
+    data.value.push(row)
+    status.value = 2
+  } catch (error) {
+    status.value = 3
+  }
+}
+
 </script>
 
 <style lang="scss" scoped></style>

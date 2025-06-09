@@ -15,6 +15,10 @@ export const tableProps = {
     required: true,
     default: () => [],
   },
+  checkedOptions: {
+    type: Array as PropType<ColumnType[]>,
+    default: () => [],
+  },
   searchParams: {
     type: Object as () => SearcjParams,
     default: () => ({
@@ -35,6 +39,10 @@ export const tableProps = {
     default: () => {
       return {}
     },
+  },
+  status: {
+    type: Number,
+    default: 0,
   },
 }
 
@@ -66,10 +74,16 @@ export interface columnsConfig {
 }
 
 export interface ColumnType {
-  prop?: string
+  prop: string
   label: string
   width?: number
   children?: ColumnType[]
+}
+
+export interface flattenColumnsType {
+  prop: string
+  label: string
+  width: number
 }
 
 export interface SearcjParams {

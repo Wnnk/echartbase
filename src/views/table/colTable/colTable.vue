@@ -1,7 +1,11 @@
 <!-- 
   @description: table 动态列
     1.根据json可多级表头嵌套
-    2.基本编辑功能新增、删除，可支持自定义    
+    2.基本编辑功能新增、删除，可支持自定义
+    3.全屏，刷新，动态列
+    4.分页
+    5.新增动态数据
+    6.根据内容自动调整列宽    
 -->
 
 <template>
@@ -9,11 +13,10 @@
     <div class="table-tool">
       <div>
         <slot name="toolLeft">
-          <el-button type="primary" size="default"
+          <el-button type="primary" size="default" @click="addDataDialog = true"
             >新增<el-icon><Plus /></el-icon
           ></el-button>
-          <el-button type="danger" size="default"
-            >删除
+          <el-button type="danger" size="default" @click="deleteRows">删除
             <el-icon><Delete /></el-icon>
           </el-button>
         </slot>
@@ -21,7 +24,7 @@
       <div>
         <slot name="toolRight">
           <el-tooltip placement="top" content="刷新">
-            <el-button size="small">
+            <el-button size="small" @click="refresh">
               <el-icon><RefreshRight /></el-icon>
             </el-button>
           </el-tooltip>
@@ -40,7 +43,7 @@
     </div>
 
     <div class="table-container">
-      <el-table :data="data" v-bind="$attrs">
+      <el-table :data="data" v-bind="$attrs" ref="tableRef" v-loading="status === 1">
         <el-table-column
           width="100"
           :label="options.indexLabel"
@@ -48,15 +51,17 @@
           v-if="options.indexLabel"
         ></el-table-column>
         <el-table-column type="selection" width="50"></el-table-column>
-        <col-table-column v-for="(column, index) in columns" :column="column"> </col-table-column>
-        <el-table-column label="操作" width="100"></el-table-column>
+        <col-table-column v-for="(column, index) in checkedOptions" :column="column"> </col-table-column>
+        <el-table-column label="操作" width="100">
+          <el-button>编辑</el-button>
+        </el-table-column>
       </el-table>
     </div>
 
     <div class="table-footer">
       <el-pagination
         v-model:current-page="currentPage"
-        v-model:page-size="pageSize"
+        v-model:page-size="searchParams.size"
         :total="total"
         layout="total, sizes, prev, pager, next, jumper"
         @current-change="pageChange"
@@ -66,18 +71,49 @@
     </div>
   </div>
 
-  <tableColumnsPopover ref="viewPopover" :virtual-ref="viewButton" />
+  <tableColumnsPopover ref="viewPopover" 
+  :virtual-ref="viewButton" :checked-options="checkedOptions"
+  @update:checked-options="checkedOptionsChange"
+  :columns="columns"
+  />
+  <addForm 
+    v-model:add-data-dialog="addDataDialog" 
+    ref="addFormRef"
+    v-model:checked-options="checkedOptions"
+    @add-data="addData"
+    />
 </template>
 
 <script setup lang="ts">
-import { computed, ref, provide, unref } from 'vue'
+import { computed, ref, provide, unref, watch } from 'vue'
 import colTableColumn from './colTableColumn.vue'
 import type { ColumnType } from './type.ts'
 import { tableProps } from './type.ts'
 import tableColumnsPopover from './components/tableColumnsPopover.vue'
+import type {ElTable} from 'element-plus'
+import addForm from './components/addForm.vue'
 
-const { columns, data, searchParams, options } = defineProps(tableProps)
-const emit = defineEmits(['update:searchParams'])
+
+// const { columns, data, searchParams, options, total, checkedOptions, stauts } = defineProps(tableProps)
+const props = defineProps(tableProps)
+const emit = defineEmits(['update:searchParams', 'update:checkedOptions', 'refresh','delete-rows','add-data'])
+
+const tableRef = ref<InstanceType<typeof ElTable>>()
+
+const addDataDialog = ref(false);
+const addFormRef = ref<InstanceType<typeof addForm>>()
+
+
+
+watch(
+  () => props.columns,
+  () => {
+    getTableWidth()
+  }
+)
+
+
+
 
 /**
  * @description: 计算表格宽度
@@ -102,24 +138,22 @@ const getColumnWidth = (arr: ColumnType[], width: number = 0) => {
  * @description: 最终计算表格宽度,有额外的列（序号列，选择列，操作列）需要补偿宽度
  */
 const getTableWidth = () => {
-  const width = getColumnWidth(columns)
-  return width + 250
+  const width = getColumnWidth(props.columns) + 250
+  tableWidth.value = width > window.innerWidth ? window.innerWidth : width
 }
-/* 初始化宽度 */
-tableWidth.value = getTableWidth() > window.innerWidth ? window.innerWidth : getTableWidth()
+getTableWidth()
+
 
 const currentPage = ref(1)
-const pageSize = ref(5)
-const total = ref(100)
 const pageChange = (page: number) => {
   emit('update:searchParams', {
-    ...searchParams,
+    ...props.searchParams,
     page,
   })
 }
 const pageSizeChange = (size: number) => {
   emit('update:searchParams', {
-    ...searchParams,
+    ...props.searchParams,
     size,
   })
 }
@@ -142,10 +176,32 @@ const toggleFullScreen = () => {
  */
 const viewPopover = ref()
 const viewButton = ref<HTMLButtonElement | null>()
-const viewPopoverVisible = ref(false)
 const popoverOutside = () => {
   unref(viewPopover).popperRef?.delayHide?.()
 }
+
+const checkedOptionsChange = (val:ColumnType[]) => {
+  emit('update:checkedOptions', val)
+}
+
+const deleteRows = () => {
+  if(!tableRef.value) return
+  const selectedRows = tableRef.value.getSelectionRows()
+  if (selectedRows.length === 0) return 
+  emit('delete-rows', selectedRows)
+}
+
+const refresh = () => {
+  pageChange(props.searchParams.page)
+  emit('refresh')
+}
+
+const addData = (addData: any) => {
+  // data.value.push(addData)
+  emit('add-data', addData)
+}
+
+
 </script>
 
 <style lang="scss" scoped>
