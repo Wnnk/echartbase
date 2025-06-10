@@ -6,11 +6,10 @@
       v-model:checked-options="checkedOptions"
       :columns="columns" 
       :data="data" 
-      :options="{ indexLabel: 'No.', loading: true }" 
+      :options="tableOptions"
       :total="total"
       @delete-rows="deleteRows"
       @add-data="addData"
-      :status="status"
     />
   </div>
   <div>
@@ -239,7 +238,9 @@ const columns = ref<ColumnType[]>([])
 const total = ref(0);
 const checkedOptions = ref<ColumnType[]>([]);
 const data = ref<any[]>([]);
-const status = ref(0)
+const tableOptions = ref({
+  status: 0,
+})
 const searchParams = ref({
 	page: 0,
 	size: 10,
@@ -259,13 +260,13 @@ const columnApi = async () => {
 }
 const dataApi = async () => {
   try {
-    status.value = 1
+    tableOptions.value.status = 1
     const res = await getColumnsData(searchParams.value) as any
     data.value = res.data;
     total.value = res.total;
-    status.value = 2
+    tableOptions.value.status = 2
   } catch (error) {
-    status.value = 3
+    tableOptions.value.status = 3
   }
 }
 
@@ -288,22 +289,22 @@ onMounted(() => {
 
 const deleteRows = (rows: any[]) => {
   try {
-    status.value = 1
+    tableOptions.value.status = 1
     data.value = data.value.filter((item) => !rows.includes(item))
     dataApi()
-    status.value = 2
+    tableOptions.value.status = 2
   } catch (error) {
-    status.value = 3
+    tableOptions.value.status = 3
   }
 }
 
 const addData = (row: any) => {
   try {
-    status.value = 1
+    tableOptions.value.status = 1
     data.value.push(row)
-    status.value = 2
+    tableOptions.value.status = 2
   } catch (error) {
-    status.value = 3
+    tableOptions.value.status = 3
   }
 }
 

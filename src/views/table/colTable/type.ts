@@ -40,10 +40,28 @@ export const tableProps = {
       return {}
     },
   },
-  status: {
-    type: Number,
-    default: 0,
-  },
+  
+}
+
+export type TableProps = {
+	// 数据列表
+	data?: Record<string, any>[]
+	// columns列表
+	columns: ColumnType[]
+	// 选中column的配置参数
+	checkedOptions?: ColumnType[]
+	// 自定义列配置相关
+	columnsConfig?: {
+		defaultCheckedOptions?: ColumnType[]
+		columns?: ColumnType[]
+	}
+	// 搜索条件
+	searchParams?: SearchParams
+	// 数组总数
+	total?: number
+	// 表格的控制参数
+	options?: TableOptions
+	curRow?: { [key: string]: any } | null
 }
 
 export type Options = {
@@ -93,17 +111,9 @@ export interface SearcjParams {
 
 export type TableOptions = InstanceType<typeof ElTable>['$props'] & Options
 
-export const defaultTableOptions: TableOptions = {
-  height: '100%',
-  maxHeight: '100%',
-  size: 'default',
-  pageSizes: [10, 20, 30, 40, 50],
-  layout: 'total, size, prev, pager, next, jumper',
-  background: true,
-  loading: false,
-  multipleSelect: false,
-  rowKey: 'id',
-  resiezable: false,
-  indexLabel: 'No.',
-  showPagination: true,
+
+export type SearchParams = {
+	page: number
+	size: number
+	[key: string]: any
 }

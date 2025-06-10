@@ -9,7 +9,7 @@
 -->
 
 <template>
-  <div class="table" :style="{ width: `${tableWidth}px` }">
+  <div class="table" >
     <div class="table-tool">
       <div>
         <slot name="toolLeft">
@@ -43,7 +43,7 @@
     </div>
 
     <div class="table-container">
-      <el-table :data="data" v-bind="$attrs" ref="tableRef" v-loading="status === 1">
+      <el-table :data="data"  ref="tableRef" v-loading="unref(computedOptions).status === 1" v-bind="unref(computedOptions)">
         <el-table-column
           width="100"
           :label="options.indexLabel"
@@ -60,10 +60,10 @@
 
     <div class="table-footer">
       <el-pagination
-        v-model:current-page="currentPage"
+        v-model:current-page="searchParams.page"
         v-model:page-size="searchParams.size"
         :total="total"
-        layout="total, sizes, prev, pager, next, jumper"
+        :layout= unref(computedOptions).layout
         @current-change="pageChange"
         @size-change="pageSizeChange"
       >
@@ -75,7 +75,11 @@
   :virtual-ref="viewButton" :checked-options="checkedOptions"
   @update:checked-options="checkedOptionsChange"
   :columns="columns"
+
   />
+
+
+
   <addForm 
     v-model:add-data-dialog="addDataDialog" 
     ref="addFormRef"
@@ -92,9 +96,9 @@ import { tableProps } from './type.ts'
 import tableColumnsPopover from './components/tableColumnsPopover.vue'
 import type {ElTable} from 'element-plus'
 import addForm from './components/addForm.vue'
+import { size } from 'lodash'
 
 
-// const { columns, data, searchParams, options, total, checkedOptions, stauts } = defineProps(tableProps)
 const props = defineProps(tableProps)
 const emit = defineEmits(['update:searchParams', 'update:checkedOptions', 'refresh','delete-rows','add-data'])
 
@@ -104,13 +108,31 @@ const addDataDialog = ref(false);
 const addFormRef = ref<InstanceType<typeof addForm>>()
 
 
+const default_tableConnfig = {
+  height:'100%',
+  maxHeight: '100%',
+  size: 'default',
+  pageSizes: [10,20,50,100],
+  layout: 'total, sizes, prev, pager, next, jumper',
+  background: true,
+  status: 0,
+  rowKey:'id',
+  showIndex:true,
+  indexLabel:'No.',
+  showPagination:true,
+}
 
-watch(
-  () => props.columns,
-  () => {
-    getTableWidth()
+
+
+
+
+const computedOptions = computed(() => {
+  const res = {
+    ...default_tableConnfig,
+    ...props.options,
   }
-)
+  return res
+})
 
 
 
@@ -137,11 +159,11 @@ const getColumnWidth = (arr: ColumnType[], width: number = 0) => {
 /**
  * @description: 最终计算表格宽度,有额外的列（序号列，选择列，操作列）需要补偿宽度
  */
-const getTableWidth = () => {
-  const width = getColumnWidth(props.columns) + 250
-  tableWidth.value = width > window.innerWidth ? window.innerWidth : width
-}
-getTableWidth()
+// const getTableWidth = () => {
+//   const width = getColumnWidth(props.columns) + 250
+//   tableWidth.value = width > window.innerWidth ? window.innerWidth : width
+// }
+// getTableWidth()
 
 
 const currentPage = ref(1)

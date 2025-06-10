@@ -1,5 +1,5 @@
 <template>
-  <el-popover trigger="click" virtual-triggering>
+  <el-popover trigger="click" virtual-triggering v-model:visible="visiable" placement="bottom-start" width="300">
     <div class="columns-contents">
       <div class="title">选择需要展示的列</div>
       <div class="label">已选</div>
@@ -7,8 +7,14 @@
         全选
       </el-checkbox>
       <el-divider />
-        <el-tree :data="localColumns" show-checkbox node-key="prop"  ref="treeRef" @check="handleTreeCheck">
-        </el-tree>
+      <el-tree
+        :data="localColumns"
+        show-checkbox
+        node-key="prop"
+        ref="treeRef"
+        @check="handleTreeCheck"
+      >
+      </el-tree>
       <el-divider />
       <div class="popover-footer">
         <el-button type="primary" @click="submit">保存</el-button>
@@ -24,7 +30,6 @@ import type { PropType } from 'vue'
 import { ElTree } from 'element-plus'
 import _ from 'lodash'
 
-
 const emit = defineEmits(['update:checkedOptions'])
 const props = defineProps({
   checkedOptions: {
@@ -36,60 +41,71 @@ const props = defineProps({
     type: Array as PropType<ColumnType[]>,
     default: () => [],
     required: true,
-  }
+  },
 })
 
-
 const localCheckedOptions = ref<ColumnType[]>([])
-const localColumns = ref<ColumnType[]>(_.cloneDeep(props.columns));
-// 初始化数据（从 localStorage 读取或使用默认全选）
-const initCheckedOptions = (columns: ColumnType[]) => {
-  const savedData = localStorage.getItem('checkedOptions');
-  
-  if (savedData) {
-    // 如果有存储的数据，使用存储的选中状态
-    localCheckedOptions.value = JSON.parse(savedData);
-  } else {
-    // 否则默认全选所有节点
-    localCheckedOptions.value = _.cloneDeep(columns);
-    const allKeys = getAllKeys(columns); // 获取所有节点的 prop
+const localColumns = ref<ColumnType[]>(_.cloneDeep(props.columns))
+
+const initCheckedOptions = () => {
+  try {
+    localColumns.value = props.columns
+    localCheckedOptions.value = props.checkedOptions || []
+      nextTick(() => {
+        const keys =  getAllKeys(localCheckedOptions.value)
+        console.log('checkedKeys:', keys)
+        treeRef.value?.setCheckedKeys(keys,false)
+      }) 
+  } catch (error) {
+    console.error('Error initializing checked options:', error)
+    // 回退到全选
+    const allKeys = getAllKeys(props.columns)
+    localCheckedOptions.value = _.cloneDeep(props.columns)
     nextTick(() => {
-      treeRef.value?.setCheckedKeys(allKeys); // 设置全选
-    });
-  }
-};
-
-// 递归获取所有节点的 prop（用于全选）
-const getAllKeys = (nodes: ColumnType[]): string[] => {
-  return nodes.flatMap(node => [
-    node.prop,
-    ...(node.children ? getAllKeys(node.children) : [])
-  ]);
-};
-
-initCheckedOptions(props.columns);
-
-watch(
-  () => props.checkedOptions,
-  (val) => {
-    initCheckedOptions(val)
-  },
-  { deep: true }
-)
-
-const checkAll = ref(true)
-const indeterminate = ref(false)
-const treeRef = ref<InstanceType<typeof ElTree>>()
-const checkedAllChange =(val:boolean) => {
-  if(val) {
-    const keys = localCheckedOptions.value.map(item => item.prop)
-    treeRef.value?.setCheckedKeys(keys)
- 
-  }else {
-    treeRef.value?.setCheckedKeys([])
+      treeRef.value?.setCheckedKeys(allKeys,false)
+    })
   }
 }
 
+
+// 递归获取所有节点的 prop（用于全选）
+const getAllKeys = (nodes: ColumnType[]): string[] => {
+  // return nodes.flatMap((node) => [node.prop, ...(node.children ? getAllKeys(node.children) : [])])
+  const keys: string[] = []
+  nodes.forEach((node) => {
+    if(node.children) {
+      keys.push(...getAllKeys(node.children))
+    }else {
+      keys.push(node.prop)
+    }
+  })
+  return keys
+}
+
+
+watch(
+  () => [props.columns, props.checkedOptions],
+  () => {
+    initCheckedOptions()
+  },
+  {
+    immediate: true,
+  }
+)
+
+
+const checkAll = ref(true)
+const indeterminate = ref(false)
+const visiable = ref(false)
+const treeRef = ref<InstanceType<typeof ElTree>>()
+const checkedAllChange = (val: boolean) => {
+  if (val) {
+    const keys = localColumns.value.map((item) => item.prop)
+    treeRef.value?.setCheckedKeys(keys)
+  } else {
+    treeRef.value?.setCheckedKeys([])
+  }
+}
 
 const handleTreeCheck = () => {
   const allKeys = getAllKeys(localColumns.value)
@@ -101,33 +117,33 @@ const handleTreeCheck = () => {
   indeterminate.value = ckeckedCount > 0 && ckeckedCount < allKeys.length
 }
 
-
-
-
-
 const submit = () => {
-  if (!treeRef.value) return;
+  if (!treeRef.value) return
 
   // 1. 获取选中的节点
   const checkedKeys = treeRef.value.getCheckedKeys() as string[]
   const newCheckedOptions = filterChecked(props.columns, checkedKeys)
-  console.log(newCheckedOptions)
 
   // 3. 提交过滤后的数据（仅最顶层选中节点）
   emit("update:checkedOptions", newCheckedOptions);
-};
+  // 4. 存储选中状态到 localStorage
+  localStorage.setItem('checkedOptions', JSON.stringify(newCheckedOptions))
+}
 
-const filterChecked = (columns:ColumnType[], checkedKeys:string[]): ColumnType[] => {
+
+const filterChecked = (columns: ColumnType[], checkedKeys: string[]): ColumnType[] => {
   const result: ColumnType[] = []
-  columns.forEach(column => {
+  columns.forEach((column) => {
     if (column.children) {
-      const children = filterChecked(column.children, checkedKeys)
-      result.push({
-        ...column,
-        children : children.length ? children : undefined,
-      })
+      const child = filterChecked(column.children, checkedKeys)
+      if (child.length > 0) {
+        result.push({
+          ...column,
+          children: child.length ? child : undefined,
+        })
+      }
     }
-    if(checkedKeys.includes(column.prop)) {
+    if (checkedKeys.includes(column.prop)) {
       result.push(column)
     }
   })
