@@ -94,15 +94,10 @@ export interface columnsConfig {
 export interface ColumnType {
   prop: string
   label: string
-  width?: number
+  minWidth?: number
   children?: ColumnType[]
 }
 
-export interface flattenColumnsType {
-  prop: string
-  label: string
-  width: number
-}
 
 export interface SearcjParams {
   page: number

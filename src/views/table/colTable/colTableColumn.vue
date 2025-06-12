@@ -1,7 +1,7 @@
 <!--  -->
 
 <template>
-  <el-table-column :prop="column.prop" :label="column.label" :width="column.width">
+  <el-table-column :prop="column.prop" :label="column.label" :min-width="column.minWidth">
     <template  v-if="column.children && column.children.length">
       <col-table-column v-for="child in column.children" :column="child"> </col-table-column>
     </template>

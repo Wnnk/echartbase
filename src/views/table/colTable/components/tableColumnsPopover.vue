@@ -53,7 +53,6 @@ const initCheckedOptions = () => {
     localCheckedOptions.value = props.checkedOptions || []
       nextTick(() => {
         const keys =  getAllKeys(localCheckedOptions.value)
-        console.log('checkedKeys:', keys)
         treeRef.value?.setCheckedKeys(keys,false)
       }) 
   } catch (error) {
@@ -123,7 +122,7 @@ const submit = () => {
   // 1. 获取选中的节点
   const checkedKeys = treeRef.value.getCheckedKeys() as string[]
   const newCheckedOptions = filterChecked(props.columns, checkedKeys)
-
+ 
   // 3. 提交过滤后的数据（仅最顶层选中节点）
   emit("update:checkedOptions", newCheckedOptions);
   // 4. 存储选中状态到 localStorage
@@ -136,14 +135,14 @@ const filterChecked = (columns: ColumnType[], checkedKeys: string[]): ColumnType
   columns.forEach((column) => {
     if (column.children) {
       const child = filterChecked(column.children, checkedKeys)
-      if (child.length > 0) {
+      if (child.length > 0 ) {
         result.push({
           ...column,
           children: child.length ? child : undefined,
         })
       }
     }
-    if (checkedKeys.includes(column.prop)) {
+    else if (checkedKeys.includes(column.prop)) {
       result.push(column)
     }
   })

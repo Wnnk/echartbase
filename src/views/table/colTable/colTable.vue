@@ -9,17 +9,21 @@
 -->
 
 <template>
-  <div class="table" >
+  <div class="table">
     <div class="table-tool">
       <div>
         <slot name="toolLeft">
           <el-button type="primary" size="default" @click="addDataDialog = true"
             >新增<el-icon><Plus /></el-icon
           ></el-button>
-          <el-button type="danger" size="default" @click="deleteRows">删除
+          <el-button type="danger" size="default" @click="deleteRows"
+            >删除
             <el-icon><Delete /></el-icon>
           </el-button>
         </slot>
+      </div>
+      <div>
+        <slot name="toolMiddle"></slot>
       </div>
       <div>
         <slot name="toolRight">
@@ -43,7 +47,13 @@
     </div>
 
     <div class="table-container">
-      <el-table :data="data"  ref="tableRef" v-loading="unref(computedOptions).status === 1" v-bind="unref(computedOptions)">
+      <el-table
+        :data="data"
+        ref="tableRef"
+        v-loading="unref(computedOptions).status === 1"
+        v-bind="unref(computedOptions)"
+        @row-click="onRowClick"
+      >
         <el-table-column
           width="100"
           :label="options.indexLabel"
@@ -51,10 +61,14 @@
           v-if="options.indexLabel"
         ></el-table-column>
         <el-table-column type="selection" width="50"></el-table-column>
-        <col-table-column v-for="(column, index) in checkedOptions" :column="column"> </col-table-column>
-        <el-table-column label="操作" width="100">
-          <el-button>编辑</el-button>
-        </el-table-column>
+        <col-table-column v-for="(column, index) in checkedOptions" :column="column">
+        </col-table-column>
+        <template #append>
+          <slot name="append"></slot>
+        </template>
+        <template #empty>
+          <slot name="empty"></slot>
+        </template>
       </el-table>
     </div>
 
@@ -63,7 +77,7 @@
         v-model:current-page="searchParams.page"
         v-model:page-size="searchParams.size"
         :total="total"
-        :layout= unref(computedOptions).layout
+        :layout="unref(computedOptions).layout"
         @current-change="pageChange"
         @size-change="pageSizeChange"
       >
@@ -71,21 +85,20 @@
     </div>
   </div>
 
-  <tableColumnsPopover ref="viewPopover" 
-  :virtual-ref="viewButton" :checked-options="checkedOptions"
-  @update:checked-options="checkedOptionsChange"
-  :columns="columns"
-
+  <tableColumnsPopover
+    ref="viewPopover"
+    :virtual-ref="viewButton"
+    :checked-options="checkedOptions"
+    @update:checked-options="checkedOptionsChange"
+    :columns="columns"
   />
 
-
-
-  <addForm 
-    v-model:add-data-dialog="addDataDialog" 
+  <addForm
+    v-model:add-data-dialog="addDataDialog"
     ref="addFormRef"
     v-model:checked-options="checkedOptions"
     @add-data="addData"
-    />
+  />
 </template>
 
 <script setup lang="ts">
@@ -94,37 +107,39 @@ import colTableColumn from './colTableColumn.vue'
 import type { ColumnType } from './type.ts'
 import { tableProps } from './type.ts'
 import tableColumnsPopover from './components/tableColumnsPopover.vue'
-import type {ElTable} from 'element-plus'
+import type { ElTable } from 'element-plus'
 import addForm from './components/addForm.vue'
-import { size } from 'lodash'
-
 
 const props = defineProps(tableProps)
-const emit = defineEmits(['update:searchParams', 'update:checkedOptions', 'refresh','delete-rows','add-data'])
+const emit = defineEmits([
+  'update:searchParams',
+  'update:checkedOptions',
+  'refresh',
+  'delete-rows',
+  'add-data',
+  'row-click',
+  'update:curRow',
+])
 
 const tableRef = ref<InstanceType<typeof ElTable>>()
 
-const addDataDialog = ref(false);
+const addDataDialog = ref(false)
 const addFormRef = ref<InstanceType<typeof addForm>>()
 
-
 const default_tableConnfig = {
-  height:'100%',
+  height: '100%',
   maxHeight: '100%',
   size: 'default',
-  pageSizes: [10,20,50,100],
+  pageSizes: [10, 20, 50, 100],
   layout: 'total, sizes, prev, pager, next, jumper',
   background: true,
   status: 0,
-  rowKey:'id',
-  showIndex:true,
-  indexLabel:'No.',
-  showPagination:true,
+  rowKey: 'id',
+  showIndex: true,
+  indexLabel: 'No.',
+  showPagination: true,
+  highlightCurrentRow: true,
 }
-
-
-
-
 
 const computedOptions = computed(() => {
   const res = {
@@ -133,9 +148,6 @@ const computedOptions = computed(() => {
   }
   return res
 })
-
-
-
 
 /**
  * @description: 计算表格宽度
@@ -146,9 +158,9 @@ const computedOptions = computed(() => {
 const tableWidth = ref(0)
 const getColumnWidth = (arr: ColumnType[], width: number = 0) => {
   arr.forEach((item) => {
-    if (item.width) {
-      width += item.width
-    } else if (item.children && item.children.length > 0 && !item.width) {
+    if (item.minWidth) {
+      width += item.minWidth
+    } else if (item.children && item.children.length > 0 && !item.minWidth) {
       width += getColumnWidth(item.children, width)
     } else {
       width += 100
@@ -164,7 +176,6 @@ const getColumnWidth = (arr: ColumnType[], width: number = 0) => {
 //   tableWidth.value = width > window.innerWidth ? window.innerWidth : width
 // }
 // getTableWidth()
-
 
 const currentPage = ref(1)
 const pageChange = (page: number) => {
@@ -202,14 +213,14 @@ const popoverOutside = () => {
   unref(viewPopover).popperRef?.delayHide?.()
 }
 
-const checkedOptionsChange = (val:ColumnType[]) => {
+const checkedOptionsChange = (val: ColumnType[]) => {
   emit('update:checkedOptions', val)
 }
 
 const deleteRows = () => {
-  if(!tableRef.value) return
+  if (!tableRef.value) return
   const selectedRows = tableRef.value.getSelectionRows()
-  if (selectedRows.length === 0) return 
+  if (selectedRows.length === 0) return
   emit('delete-rows', selectedRows)
 }
 
@@ -223,6 +234,10 @@ const addData = (addData: any) => {
   emit('add-data', addData)
 }
 
+const onRowClick = (row: any, column: any) => {
+  emit('row-click', row, column)
+  emit('update:curRow', row)
+}
 
 </script>
 

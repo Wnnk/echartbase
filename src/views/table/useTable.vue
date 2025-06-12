@@ -1,7 +1,7 @@
 <template>
   <div :style="{ background: '#f2f3f5' }">
     <h1>动态列</h1>
-    <col-table
+    <!-- <col-table
       v-model:search-params="searchParams"
       v-model:checked-options="checkedOptions"
       :columns="columns" 
@@ -10,7 +10,18 @@
       :total="total"
       @delete-rows="deleteRows"
       @add-data="addData"
-    />
+    >
+      <template #toolMiddle>
+        <span>中间自定义工具栏</span>
+      </template>
+      <el-table-column type="expand" width="50px">
+        <template #default="{ row }">
+          <div>
+            <span>展开后显示的名字: {{ row.name }}</span>
+          </div>
+        </template>
+      </el-table-column>
+    </col-table> -->
   </div>
   <div>
     <h1>读取XLSX table组件</h1>
@@ -40,10 +51,10 @@
   </div>
   <div>
     <h1>带分页器的table组件</h1>
-    <paginate-table :store="store">
-      <el-table-column prop="date" label="日期"></el-table-column>
-      <el-table-column prop="name" label="姓名"></el-table-column>
-      <el-table-column prop="address" label="地址"></el-table-column>
+    <paginate-table :store="store" >
+      <el-table-column prop="date" label="日期" width="100"></el-table-column>
+      <el-table-column prop="name" label="姓名"width=50></el-table-column>
+      <el-table-column prop="address" label="地址" width=100></el-table-column>
     </paginate-table>
   </div>
 </template>
@@ -240,6 +251,8 @@ const checkedOptions = ref<ColumnType[]>([]);
 const data = ref<any[]>([]);
 const tableOptions = ref({
   status: 0,
+  indexLabel: 'No.',
+  showSummary: true,
 })
 const searchParams = ref({
 	page: 0,
@@ -253,7 +266,6 @@ const columnApi = async () => {
     columns.value = await getTableColumns() as ColumnType[]
     checkedOptions.value = JSON.parse(JSON.stringify(columns.value))
     dataApi()
-    // console.log(checkedOptions.value)
   } catch (error) {
     console.log(error)
   }

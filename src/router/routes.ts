@@ -91,7 +91,7 @@ const routes = [
     component: () => import('@/views/Dialog/useDialog.vue'),
   },
   {
-    path: '/',
+    path: '/useTable',
     name: 'useTable',
     component: () => import('@/views/table/useTable.vue'),
   },
@@ -99,6 +99,16 @@ const routes = [
     path: '/useForm',
     name: 'useForm',
     component: ()=> import("@/views/form/useForm.vue")
+  },
+  {
+    path: '/useColTable',
+    name: 'useColTable',
+    component: () => import('@/views/table/Demo/useColTable.vue')
+  },
+  {
+    path: '/',
+    name: 'useTreeColTable',
+    component: () => import('@/views/table/Demo/useTreeColTable.vue')
   }
 ]
 
